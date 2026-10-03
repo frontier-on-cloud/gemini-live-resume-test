@@ -1,0 +1,12 @@
+[project]
+name = "live-resume-test"
+version = "0.1.0"
+description = "Measure what happens to an in-flight side-effecting tool call on the Gemini Live API when the connection drops and the client resumes the session."
+requires-python = ">=3.12,<3.14"
+dependencies = [
+    "google-genai==2.25.0",
+    "python-dotenv",
+]
+
+[tool.uv]
+package = false

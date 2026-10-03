@@ -1,0 +1,168 @@
+{"scenario": "R2", "run": 1, "t_ms": 0, "event": "run_start", "wall": "2026-10-02T22:11:01", "model": "gemini-3.8-live", "sdk": "2.25.0", "disconnect_after_s": 1.0, "latency_s": 4.0, "old_response": "never", "inject_transparent": false, "clips_s": {"book": 2.686, "ask": 0.746}, "chunk_ms": 100, "mime_type": "audio/pcm;rate=16000"}
+{"scenario": "R2", "run": 1, "t_ms": 0, "event": "connect_start", "conn": 1, "resume": false, "handle_sha": null}
+{"scenario": "R2", "run": 1, "t_ms": 60, "event": "ws_open", "conn": 1}
+{"scenario": "R2", "run": 1, "t_ms": 60, "event": "setup_sent", "conn": 1, "setup_keys": ["generationConfig", "inputAudioTranscription", "model", "outputAudioTranscription", "sessionResumption", "systemInstruction", "tools"], "session_resumption": {"keys": [], "handle_present": false, "handle_sha": null, "transparent": null}, "transparent_injected_on_wire": false}
+{"scenario": "R2", "run": 1, "t_ms": 346, "event": "first_server_message", "conn": 1, "keys": ["setupComplete"], "setup_complete": true, "setup_complete_fields": [], "session_id_sha": null, "since_connect_start_ms": 346, "since_abort_ms": null}
+{"scenario": "R2", "run": 1, "t_ms": 361, "event": "connected", "conn": 1, "sdk_setup_complete": true, "since_connect_start_ms": 361, "since_abort_ms": null}
+{"scenario": "R2", "run": 1, "t_ms": 363, "event": "user_audio_start", "conn": 1, "label": "book_request", "audio_s": 2.686, "chunks": 27, "client_msg_index": 2}
+{"scenario": "R2", "run": 1, "t_ms": 474, "event": "first_message_after_setup", "conn": 1, "keys": ["sessionResumptionUpdate"], "since_abort_ms": null}
+{"scenario": "R2", "run": 1, "t_ms": 474, "event": "session_resumption_update", "at_ms": 473, "conn": 1, "keys": ["newHandle", "resumable"], "resumable": true, "handle_present": true, "handle_len": 36, "handle_sha": "de6dc38aa7", "last_consumed_client_message_index": null, "client_msg_index_now": 3, "pending_call_ids": [], "since_tool_call_ms": null}
+{"scenario": "R2", "run": 1, "t_ms": 574, "event": "voice_activity", "conn": 1, "type": "ACTIVITY_START", "audio_offset": "0.240s"}
+{"scenario": "R2", "run": 1, "t_ms": 2965, "event": "user_audio_end", "conn": 1, "label": "book_request", "client_msg_index": 28}
+{"scenario": "R2", "run": 1, "t_ms": 4098, "event": "input_transcript", "conn": 1, "text": "Put me the 3:00 p.m. slot tomorrow, please."}
+{"scenario": "R2", "run": 1, "t_ms": 4098, "event": "voice_activity", "conn": 1, "type": "ACTIVITY_END", "audio_offset": "3.840s"}
+{"scenario": "R2", "run": 1, "t_ms": 4098, "event": "raw_toolCall", "conn": 1, "payload": {"functionCalls": [{"name": "book_slot", "args": {"slot": "tomorrow 3pm"}, "id": "call_677571"}]}}
+{"scenario": "R2", "run": 1, "t_ms": 4099, "event": "tool_call_received", "conn": 1, "call_id": "call_677571", "name": "book_slot", "args": {"slot": "tomorrow 3pm"}, "key": "book_slot:{\"slot\":\"tomorrow 15:00\"}", "repeats_id": [], "repeats_key_of": [], "after_resume": false, "since_resume_ms": null}
+{"scenario": "R2", "run": 1, "t_ms": 4099, "event": "service_job_started", "conn": 1, "job_id": "job-1", "call_id": "call_677571", "latency_s": 4.0}
+{"scenario": "R2", "run": 1, "t_ms": 4100, "event": "generation_complete", "conn": 1}
+{"scenario": "R2", "run": 1, "t_ms": 4100, "event": "turn_complete", "conn": 1}
+{"scenario": "R2", "run": 1, "t_ms": 4100, "event": "usage_metadata", "conn": 1, "total_token_count": 783}
+{"scenario": "R2", "run": 1, "t_ms": 5100, "event": "disconnect_start", "conn": 1, "why": "1.0s after toolCall", "since_tool_call_ms": 1001, "since_commit_ms": null, "pending_call_ids": ["call_677571"], "model_idle": true, "last_update": {"at_ms": 473, "resumable": true, "handle_present": true, "handle_sha": "de6dc38aa7", "last_consumed_client_message_index": null}, "usable_handle": {"at_ms": 473, "sha": "de6dc38aa7"}, "client_msg_index": 49}
+{"scenario": "R2", "run": 1, "t_ms": 5101, "event": "transport_aborted", "conn": 1, "method": "websockets ClientConnection.transport.abort()", "ws_state_before": "1", "tasks_stopped_ms": 1}
+{"scenario": "R2", "run": 1, "t_ms": 5101, "event": "connection_dropped", "conn": 1, "ws_state_after": "3", "local_close_code": 1006, "sdk_context_exit_error": null, "since_abort_ms": 0}
+{"scenario": "R2", "run": 1, "t_ms": 5101, "event": "reconnect_start", "reason": "scripted_disconnect", "handle_sha": "de6dc38aa7", "handle_from_ms": 473, "handle_from_conn": 1, "handle_before_tool_call": true}
+{"scenario": "R2", "run": 1, "t_ms": 5101, "event": "connect_start", "conn": 2, "resume": true, "handle_sha": "de6dc38aa7"}
+{"scenario": "R2", "run": 1, "t_ms": 5150, "event": "ws_open", "conn": 2}
+{"scenario": "R2", "run": 1, "t_ms": 5150, "event": "setup_sent", "conn": 2, "setup_keys": ["generationConfig", "inputAudioTranscription", "model", "outputAudioTranscription", "sessionResumption", "systemInstruction", "tools"], "session_resumption": {"keys": ["handle"], "handle_present": true, "handle_sha": "de6dc38aa7", "transparent": null}, "transparent_injected_on_wire": false}
+{"scenario": "R2", "run": 1, "t_ms": 5699, "event": "ws_closed", "conn": 2, "where": "ws_recv", "expected": false, "code": 1011, "reason": "Internal error encountered."}
+{"scenario": "R2", "run": 1, "t_ms": 5699, "event": "reconnect_attempt_failed", "attempt": 1, "start_ms": 5101, "error": "APIError: 1011 None. Internal error encountered.", "ms_to_error": 598, "since_abort_ms": 598, "setup_sent": true, "server_frames": 0, "close": {"code": 1011, "reason": "Internal error encountered.", "at_ms": 5699}}
+{"scenario": "R2", "run": 1, "t_ms": 6701, "event": "connect_start", "conn": 3, "resume": true, "handle_sha": "de6dc38aa7"}
+{"scenario": "R2", "run": 1, "t_ms": 6749, "event": "ws_open", "conn": 3}
+{"scenario": "R2", "run": 1, "t_ms": 6750, "event": "setup_sent", "conn": 3, "setup_keys": ["generationConfig", "inputAudioTranscription", "model", "outputAudioTranscription", "sessionResumption", "systemInstruction", "tools"], "session_resumption": {"keys": ["handle"], "handle_present": true, "handle_sha": "de6dc38aa7", "transparent": null}, "transparent_injected_on_wire": false}
+{"scenario": "R2", "run": 1, "t_ms": 7279, "event": "first_server_message", "conn": 3, "keys": ["setupComplete"], "setup_complete": true, "setup_complete_fields": [], "session_id_sha": null, "since_connect_start_ms": 578, "since_abort_ms": 2178}
+{"scenario": "R2", "run": 1, "t_ms": 7280, "event": "connected", "conn": 3, "sdk_setup_complete": true, "since_connect_start_ms": 579, "since_abort_ms": 2179}
+{"scenario": "R2", "run": 1, "t_ms": 7280, "event": "resumed", "reason": "scripted_disconnect", "conn": 3, "start_ms": 5101, "attempts": 2, "first_raw_ms": 7279, "connected_ms": 7280, "first_raw_has_setup_complete": true, "first_raw_keys": ["setupComplete"], "handle_at_ms": 473, "handle_conn": 1, "abort_to_first_raw_ms": 2178, "abort_to_connected_ms": 2179}
+{"scenario": "R2", "run": 1, "t_ms": 7280, "event": "first_message_after_setup", "conn": 3, "keys": ["sessionResumptionUpdate"], "since_abort_ms": 2179}
+{"scenario": "R2", "run": 1, "t_ms": 7280, "event": "session_resumption_update", "at_ms": 7280, "conn": 3, "keys": ["newHandle", "resumable"], "resumable": true, "handle_present": true, "handle_len": 36, "handle_sha": "d7d3e8196f", "last_consumed_client_message_index": null, "client_msg_index_now": 0, "pending_call_ids": ["call_677571"], "since_tool_call_ms": 3181}
+{"scenario": "R2", "run": 1, "t_ms": 8101, "event": "service_prepared", "job_id": "job-1", "call_id": "call_677571"}
+{"scenario": "R2", "run": 1, "t_ms": 8102, "event": "service_committed", "job_id": "job-1", "call_id": "call_677571", "status": "booked", "slot": "tomorrow 3pm", "confirmation_id": "BK-1001", "connected": true}
+{"scenario": "R2", "run": 1, "t_ms": 8102, "event": "old_response_withheld", "call_id": "call_677571"}
+{"scenario": "R2", "run": 1, "t_ms": 9281, "event": "ask_queued", "settle": "2.0s after resume"}
+{"scenario": "R2", "run": 1, "t_ms": 9282, "event": "user_audio_start", "conn": 3, "label": "ask", "audio_s": 0.746, "chunks": 8, "client_msg_index": 21}
+{"scenario": "R2", "run": 1, "t_ms": 9429, "event": "voice_activity", "conn": 3, "type": "ACTIVITY_START", "audio_offset": "7.040s"}
+{"scenario": "R2", "run": 1, "t_ms": 9981, "event": "user_audio_end", "conn": 3, "label": "ask", "client_msg_index": 28}
+{"scenario": "R2", "run": 1, "t_ms": 11070, "event": "input_transcript", "conn": 3, "text": "Did you book it?"}
+{"scenario": "R2", "run": 1, "t_ms": 11070, "event": "voice_activity", "conn": 3, "type": "ACTIVITY_END", "audio_offset": "8.640s"}
+{"scenario": "R2", "run": 1, "t_ms": 11071, "event": "audio_start", "conn": 3}
+{"scenario": "R2", "run": 1, "t_ms": 11071, "event": "model_transcript", "conn": 3, "text": "I'm booking the "}
+{"scenario": "R2", "run": 1, "t_ms": 11085, "event": "model_transcript", "conn": 3, "text": "3 pm slot"}
+{"scenario": "R2", "run": 1, "t_ms": 11273, "event": "model_transcript", "conn": 3, "text": " for you now."}
+{"scenario": "R2", "run": 1, "t_ms": 11380, "event": "audio_segment", "closed_by": "generation_complete", "conn": 3, "first_ms": 11071, "last_ms": 11353, "chunks": 10, "bytes": 116640}
+{"scenario": "R2", "run": 1, "t_ms": 11380, "event": "generation_complete", "conn": 3}
+{"scenario": "R2", "run": 1, "t_ms": 13512, "event": "turn_complete", "conn": 3}
+{"scenario": "R2", "run": 1, "t_ms": 13512, "event": "usage_metadata", "conn": 3, "total_token_count": 899}
+{"scenario": "R2", "run": 1, "t_ms": 14389, "event": "run_stop_condition", "reason": "settled"}
+{"scenario": "R2", "run": 1, "t_ms": 14400, "event": "session_closed_cleanly", "conn": 3}
+{"scenario": "R2", "run": 1, "t_ms": -1, "event": "run_end", "summary": {"run": 1, "wall": "2026-10-02T22:11:01", "tool_call_ms": 4099, "call": "call_677571 {\"slot\": \"tomorrow 3pm\"}", "disconnect_ms": "5101 (+1002 vs call)", "updates_conn1": 1, "last_update_before_drop": "@473 resumable=True handle=yes", "handle_used": "from @473 (-3626 ms vs call)", "resume_attempts": "2 (1 failed: #1 +598 ms APIError: 1011 None. Internal error encountered.)", "reconnect_ms": "2178 to first msg, 2179 to connect() return", "new_setup_complete": "yes", "session_id_same": "-", "updates_after_resume": 1, "reissued_call": "no", "old_response": "not sent (scenario)", "model_before_drop": "", "model_after_resume_before_ask": "-", "answer": "I'm booking the 3 pm slot for you now.", "commits": 1, "commit_ids": "BK-1001<-call_677571", "claim": "neither", "consistent": "no", "go_away": 0, "cancellations": 0, "interrupted": 0, "done_reason": "settled", "errors": "ws_closed conn=2 code=1011 Internal error encountered.", "input_transcripts": ["4098@c1: Put me the 3:00 p.m. slot tomorrow, please.", "11070@c3: Did you book it?"], "last_consumed_idx_seen": []}}
+{"scenario": "R2", "run": 2, "t_ms": 0, "event": "run_start", "wall": "2026-10-02T22:11:18", "model": "gemini-3.8-live", "sdk": "2.25.0", "disconnect_after_s": 1.0, "latency_s": 4.0, "old_response": "never", "inject_transparent": false, "clips_s": {"book": 2.686, "ask": 0.746}, "chunk_ms": 100, "mime_type": "audio/pcm;rate=16000"}
+{"scenario": "R2", "run": 2, "t_ms": 0, "event": "connect_start", "conn": 1, "resume": false, "handle_sha": null}
+{"scenario": "R2", "run": 2, "t_ms": 121, "event": "ws_open", "conn": 1}
+{"scenario": "R2", "run": 2, "t_ms": 121, "event": "setup_sent", "conn": 1, "setup_keys": ["generationConfig", "inputAudioTranscription", "model", "outputAudioTranscription", "sessionResumption", "systemInstruction", "tools"], "session_resumption": {"keys": [], "handle_present": false, "handle_sha": null, "transparent": null}, "transparent_injected_on_wire": false}
+{"scenario": "R2", "run": 2, "t_ms": 406, "event": "first_server_message", "conn": 1, "keys": ["setupComplete"], "setup_complete": true, "setup_complete_fields": [], "session_id_sha": null, "since_connect_start_ms": 406, "since_abort_ms": null}
+{"scenario": "R2", "run": 2, "t_ms": 407, "event": "connected", "conn": 1, "sdk_setup_complete": true, "since_connect_start_ms": 407, "since_abort_ms": null}
+{"scenario": "R2", "run": 2, "t_ms": 407, "event": "user_audio_start", "conn": 1, "label": "book_request", "audio_s": 2.686, "chunks": 27, "client_msg_index": 2}
+{"scenario": "R2", "run": 2, "t_ms": 606, "event": "first_message_after_setup", "conn": 1, "keys": ["sessionResumptionUpdate"], "since_abort_ms": null}
+{"scenario": "R2", "run": 2, "t_ms": 606, "event": "session_resumption_update", "at_ms": 606, "conn": 1, "keys": ["newHandle", "resumable"], "resumable": true, "handle_present": true, "handle_len": 36, "handle_sha": "47d7d63b25", "last_consumed_client_message_index": null, "client_msg_index_now": 3, "pending_call_ids": [], "since_tool_call_ms": null}
+{"scenario": "R2", "run": 2, "t_ms": 628, "event": "voice_activity", "conn": 1, "type": "ACTIVITY_START", "audio_offset": "0.240s"}
+{"scenario": "R2", "run": 2, "t_ms": 3008, "event": "user_audio_end", "conn": 1, "label": "book_request", "client_msg_index": 28}
+{"scenario": "R2", "run": 2, "t_ms": 4141, "event": "input_transcript", "conn": 1, "text": "Put me the 3:00 p.m. slot tomorrow, please."}
+{"scenario": "R2", "run": 2, "t_ms": 4141, "event": "voice_activity", "conn": 1, "type": "ACTIVITY_END", "audio_offset": "3.840s"}
+{"scenario": "R2", "run": 2, "t_ms": 4141, "event": "raw_toolCall", "conn": 1, "payload": {"functionCalls": [{"name": "book_slot", "args": {"slot": "tomorrow 3pm"}, "id": "call_440473"}]}}
+{"scenario": "R2", "run": 2, "t_ms": 4142, "event": "tool_call_received", "conn": 1, "call_id": "call_440473", "name": "book_slot", "args": {"slot": "tomorrow 3pm"}, "key": "book_slot:{\"slot\":\"tomorrow 15:00\"}", "repeats_id": [], "repeats_key_of": [], "after_resume": false, "since_resume_ms": null}
+{"scenario": "R2", "run": 2, "t_ms": 4142, "event": "service_job_started", "conn": 1, "job_id": "job-1", "call_id": "call_440473", "latency_s": 4.0}
+{"scenario": "R2", "run": 2, "t_ms": 4142, "event": "generation_complete", "conn": 1}
+{"scenario": "R2", "run": 2, "t_ms": 4143, "event": "turn_complete", "conn": 1}
+{"scenario": "R2", "run": 2, "t_ms": 4143, "event": "usage_metadata", "conn": 1, "total_token_count": 783}
+{"scenario": "R2", "run": 2, "t_ms": 5143, "event": "disconnect_start", "conn": 1, "why": "1.0s after toolCall", "since_tool_call_ms": 1001, "since_commit_ms": null, "pending_call_ids": ["call_440473"], "model_idle": true, "last_update": {"at_ms": 606, "resumable": true, "handle_present": true, "handle_sha": "47d7d63b25", "last_consumed_client_message_index": null}, "usable_handle": {"at_ms": 606, "sha": "47d7d63b25"}, "client_msg_index": 49}
+{"scenario": "R2", "run": 2, "t_ms": 5144, "event": "transport_aborted", "conn": 1, "method": "websockets ClientConnection.transport.abort()", "ws_state_before": "1", "tasks_stopped_ms": 1}
+{"scenario": "R2", "run": 2, "t_ms": 5145, "event": "connection_dropped", "conn": 1, "ws_state_after": "3", "local_close_code": 1006, "sdk_context_exit_error": null, "since_abort_ms": 1}
+{"scenario": "R2", "run": 2, "t_ms": 5145, "event": "reconnect_start", "reason": "scripted_disconnect", "handle_sha": "47d7d63b25", "handle_from_ms": 606, "handle_from_conn": 1, "handle_before_tool_call": true}
+{"scenario": "R2", "run": 2, "t_ms": 5146, "event": "connect_start", "conn": 2, "resume": true, "handle_sha": "47d7d63b25"}
+{"scenario": "R2", "run": 2, "t_ms": 5187, "event": "ws_open", "conn": 2}
+{"scenario": "R2", "run": 2, "t_ms": 5188, "event": "setup_sent", "conn": 2, "setup_keys": ["generationConfig", "inputAudioTranscription", "model", "outputAudioTranscription", "sessionResumption", "systemInstruction", "tools"], "session_resumption": {"keys": ["handle"], "handle_present": true, "handle_sha": "47d7d63b25", "transparent": null}, "transparent_injected_on_wire": false}
+{"scenario": "R2", "run": 2, "t_ms": 5735, "event": "ws_closed", "conn": 2, "where": "ws_recv", "expected": false, "code": 1011, "reason": "Internal error encountered."}
+{"scenario": "R2", "run": 2, "t_ms": 5736, "event": "reconnect_attempt_failed", "attempt": 1, "start_ms": 5145, "error": "APIError: 1011 None. Internal error encountered.", "ms_to_error": 591, "since_abort_ms": 592, "setup_sent": true, "server_frames": 0, "close": {"code": 1011, "reason": "Internal error encountered.", "at_ms": 5735}}
+{"scenario": "R2", "run": 2, "t_ms": 6737, "event": "connect_start", "conn": 3, "resume": true, "handle_sha": "47d7d63b25"}
+{"scenario": "R2", "run": 2, "t_ms": 6783, "event": "ws_open", "conn": 3}
+{"scenario": "R2", "run": 2, "t_ms": 6784, "event": "setup_sent", "conn": 3, "setup_keys": ["generationConfig", "inputAudioTranscription", "model", "outputAudioTranscription", "sessionResumption", "systemInstruction", "tools"], "session_resumption": {"keys": ["handle"], "handle_present": true, "handle_sha": "47d7d63b25", "transparent": null}, "transparent_injected_on_wire": false}
+{"scenario": "R2", "run": 2, "t_ms": 7426, "event": "first_server_message", "conn": 3, "keys": ["setupComplete"], "setup_complete": true, "setup_complete_fields": [], "session_id_sha": null, "since_connect_start_ms": 688, "since_abort_ms": 2281}
+{"scenario": "R2", "run": 2, "t_ms": 7426, "event": "connected", "conn": 3, "sdk_setup_complete": true, "since_connect_start_ms": 689, "since_abort_ms": 2282}
+{"scenario": "R2", "run": 2, "t_ms": 7427, "event": "resumed", "reason": "scripted_disconnect", "conn": 3, "start_ms": 5145, "attempts": 2, "first_raw_ms": 7425, "connected_ms": 7426, "first_raw_has_setup_complete": true, "first_raw_keys": ["setupComplete"], "handle_at_ms": 606, "handle_conn": 1, "abort_to_first_raw_ms": 2281, "abort_to_connected_ms": 2282}
+{"scenario": "R2", "run": 2, "t_ms": 7427, "event": "first_message_after_setup", "conn": 3, "keys": ["sessionResumptionUpdate"], "since_abort_ms": 2283}
+{"scenario": "R2", "run": 2, "t_ms": 7427, "event": "session_resumption_update", "at_ms": 7427, "conn": 3, "keys": ["newHandle", "resumable"], "resumable": true, "handle_present": true, "handle_len": 36, "handle_sha": "c9ed3485af", "last_consumed_client_message_index": null, "client_msg_index_now": 0, "pending_call_ids": ["call_440473"], "since_tool_call_ms": 3285}
+{"scenario": "R2", "run": 2, "t_ms": 8143, "event": "service_prepared", "job_id": "job-1", "call_id": "call_440473"}
+{"scenario": "R2", "run": 2, "t_ms": 8143, "event": "service_committed", "job_id": "job-1", "call_id": "call_440473", "status": "booked", "slot": "tomorrow 3pm", "confirmation_id": "BK-1001", "connected": true}
+{"scenario": "R2", "run": 2, "t_ms": 8144, "event": "old_response_withheld", "call_id": "call_440473"}
+{"scenario": "R2", "run": 2, "t_ms": 9426, "event": "ask_queued", "settle": "2.0s after resume"}
+{"scenario": "R2", "run": 2, "t_ms": 9427, "event": "user_audio_start", "conn": 3, "label": "ask", "audio_s": 0.746, "chunks": 8, "client_msg_index": 21}
+{"scenario": "R2", "run": 2, "t_ms": 9583, "event": "voice_activity", "conn": 3, "type": "ACTIVITY_START", "audio_offset": "7.040s"}
+{"scenario": "R2", "run": 2, "t_ms": 10128, "event": "user_audio_end", "conn": 3, "label": "ask", "client_msg_index": 28}
+{"scenario": "R2", "run": 2, "t_ms": 11216, "event": "input_transcript", "conn": 3, "text": "Did you book it?"}
+{"scenario": "R2", "run": 2, "t_ms": 11216, "event": "voice_activity", "conn": 3, "type": "ACTIVITY_END", "audio_offset": "8.640s"}
+{"scenario": "R2", "run": 2, "t_ms": 11216, "event": "audio_start", "conn": 3}
+{"scenario": "R2", "run": 2, "t_ms": 11216, "event": "model_transcript", "conn": 3, "text": "I am booking the 3 "}
+{"scenario": "R2", "run": 2, "t_ms": 11328, "event": "model_transcript", "conn": 3, "text": "p.m. slot for tomorrow"}
+{"scenario": "R2", "run": 2, "t_ms": 11619, "event": "model_transcript", "conn": 3, "text": " right now."}
+{"scenario": "R2", "run": 2, "t_ms": 11831, "event": "audio_segment", "closed_by": "generation_complete", "conn": 3, "first_ms": 11216, "last_ms": 11803, "chunks": 12, "bytes": 154562}
+{"scenario": "R2", "run": 2, "t_ms": 11831, "event": "generation_complete", "conn": 3}
+{"scenario": "R2", "run": 2, "t_ms": 14435, "event": "turn_complete", "conn": 3}
+{"scenario": "R2", "run": 2, "t_ms": 14435, "event": "usage_metadata", "conn": 3, "total_token_count": 920}
+{"scenario": "R2", "run": 2, "t_ms": 14844, "event": "run_stop_condition", "reason": "settled"}
+{"scenario": "R2", "run": 2, "t_ms": 14855, "event": "session_closed_cleanly", "conn": 3}
+{"scenario": "R2", "run": 2, "t_ms": -1, "event": "run_end", "summary": {"run": 2, "wall": "2026-10-02T22:11:18", "tool_call_ms": 4142, "call": "call_440473 {\"slot\": \"tomorrow 3pm\"}", "disconnect_ms": "5144 (+1002 vs call)", "updates_conn1": 1, "last_update_before_drop": "@606 resumable=True handle=yes", "handle_used": "from @606 (-3536 ms vs call)", "resume_attempts": "2 (1 failed: #1 +592 ms APIError: 1011 None. Internal error encountered.)", "reconnect_ms": "2281 to first msg, 2282 to connect() return", "new_setup_complete": "yes", "session_id_same": "-", "updates_after_resume": 1, "reissued_call": "no", "old_response": "not sent (scenario)", "model_before_drop": "", "model_after_resume_before_ask": "-", "answer": "I am booking the 3 p.m. slot for tomorrow right now.", "commits": 1, "commit_ids": "BK-1001<-call_440473", "claim": "neither", "consistent": "no", "go_away": 0, "cancellations": 0, "interrupted": 0, "done_reason": "settled", "errors": "ws_closed conn=2 code=1011 Internal error encountered.", "input_transcripts": ["4141@c1: Put me the 3:00 p.m. slot tomorrow, please.", "11216@c3: Did you book it?"], "last_consumed_idx_seen": []}}
+{"scenario": "R2", "run": 3, "t_ms": 0, "event": "run_start", "wall": "2026-10-02T22:11:36", "model": "gemini-3.8-live", "sdk": "2.25.0", "disconnect_after_s": 1.0, "latency_s": 4.0, "old_response": "never", "inject_transparent": false, "clips_s": {"book": 2.686, "ask": 0.746}, "chunk_ms": 100, "mime_type": "audio/pcm;rate=16000"}
+{"scenario": "R2", "run": 3, "t_ms": 0, "event": "connect_start", "conn": 1, "resume": false, "handle_sha": null}
+{"scenario": "R2", "run": 3, "t_ms": 90, "event": "ws_open", "conn": 1}
+{"scenario": "R2", "run": 3, "t_ms": 91, "event": "setup_sent", "conn": 1, "setup_keys": ["generationConfig", "inputAudioTranscription", "model", "outputAudioTranscription", "sessionResumption", "systemInstruction", "tools"], "session_resumption": {"keys": [], "handle_present": false, "handle_sha": null, "transparent": null}, "transparent_injected_on_wire": false}
+{"scenario": "R2", "run": 3, "t_ms": 316, "event": "first_server_message", "conn": 1, "keys": ["setupComplete"], "setup_complete": true, "setup_complete_fields": [], "session_id_sha": null, "since_connect_start_ms": 316, "since_abort_ms": null}
+{"scenario": "R2", "run": 3, "t_ms": 316, "event": "connected", "conn": 1, "sdk_setup_complete": true, "since_connect_start_ms": 316, "since_abort_ms": null}
+{"scenario": "R2", "run": 3, "t_ms": 317, "event": "user_audio_start", "conn": 1, "label": "book_request", "audio_s": 2.686, "chunks": 27, "client_msg_index": 2}
+{"scenario": "R2", "run": 3, "t_ms": 441, "event": "first_message_after_setup", "conn": 1, "keys": ["sessionResumptionUpdate"], "since_abort_ms": null}
+{"scenario": "R2", "run": 3, "t_ms": 441, "event": "session_resumption_update", "at_ms": 441, "conn": 1, "keys": ["newHandle", "resumable"], "resumable": true, "handle_present": true, "handle_len": 36, "handle_sha": "b3c04b4a3f", "last_consumed_client_message_index": null, "client_msg_index_now": 3, "pending_call_ids": [], "since_tool_call_ms": null}
+{"scenario": "R2", "run": 3, "t_ms": 575, "event": "voice_activity", "conn": 1, "type": "ACTIVITY_START", "audio_offset": "0.240s"}
+{"scenario": "R2", "run": 3, "t_ms": 2917, "event": "user_audio_end", "conn": 1, "label": "book_request", "client_msg_index": 28}
+{"scenario": "R2", "run": 3, "t_ms": 4052, "event": "input_transcript", "conn": 1, "text": "Put me the 3:00 p.m. slot tomorrow, please."}
+{"scenario": "R2", "run": 3, "t_ms": 4053, "event": "voice_activity", "conn": 1, "type": "ACTIVITY_END", "audio_offset": "3.840s"}
+{"scenario": "R2", "run": 3, "t_ms": 4053, "event": "raw_toolCall", "conn": 1, "payload": {"functionCalls": [{"name": "book_slot", "args": {"slot": "tomorrow 3pm"}, "id": "call_482668"}]}}
+{"scenario": "R2", "run": 3, "t_ms": 4054, "event": "tool_call_received", "conn": 1, "call_id": "call_482668", "name": "book_slot", "args": {"slot": "tomorrow 3pm"}, "key": "book_slot:{\"slot\":\"tomorrow 15:00\"}", "repeats_id": [], "repeats_key_of": [], "after_resume": false, "since_resume_ms": null}
+{"scenario": "R2", "run": 3, "t_ms": 4054, "event": "service_job_started", "conn": 1, "job_id": "job-1", "call_id": "call_482668", "latency_s": 4.0}
+{"scenario": "R2", "run": 3, "t_ms": 4054, "event": "generation_complete", "conn": 1}
+{"scenario": "R2", "run": 3, "t_ms": 4054, "event": "turn_complete", "conn": 1}
+{"scenario": "R2", "run": 3, "t_ms": 4054, "event": "usage_metadata", "conn": 1, "total_token_count": 783}
+{"scenario": "R2", "run": 3, "t_ms": 5055, "event": "disconnect_start", "conn": 1, "why": "1.0s after toolCall", "since_tool_call_ms": 1001, "since_commit_ms": null, "pending_call_ids": ["call_482668"], "model_idle": true, "last_update": {"at_ms": 441, "resumable": true, "handle_present": true, "handle_sha": "b3c04b4a3f", "last_consumed_client_message_index": null}, "usable_handle": {"at_ms": 441, "sha": "b3c04b4a3f"}, "client_msg_index": 49}
+{"scenario": "R2", "run": 3, "t_ms": 5056, "event": "transport_aborted", "conn": 1, "method": "websockets ClientConnection.transport.abort()", "ws_state_before": "1", "tasks_stopped_ms": 1}
+{"scenario": "R2", "run": 3, "t_ms": 5057, "event": "connection_dropped", "conn": 1, "ws_state_after": "3", "local_close_code": 1006, "sdk_context_exit_error": null, "since_abort_ms": 1}
+{"scenario": "R2", "run": 3, "t_ms": 5057, "event": "reconnect_start", "reason": "scripted_disconnect", "handle_sha": "b3c04b4a3f", "handle_from_ms": 441, "handle_from_conn": 1, "handle_before_tool_call": true}
+{"scenario": "R2", "run": 3, "t_ms": 5057, "event": "connect_start", "conn": 2, "resume": true, "handle_sha": "b3c04b4a3f"}
+{"scenario": "R2", "run": 3, "t_ms": 5103, "event": "ws_open", "conn": 2}
+{"scenario": "R2", "run": 3, "t_ms": 5103, "event": "setup_sent", "conn": 2, "setup_keys": ["generationConfig", "inputAudioTranscription", "model", "outputAudioTranscription", "sessionResumption", "systemInstruction", "tools"], "session_resumption": {"keys": ["handle"], "handle_present": true, "handle_sha": "b3c04b4a3f", "transparent": null}, "transparent_injected_on_wire": false}
+{"scenario": "R2", "run": 3, "t_ms": 5637, "event": "ws_closed", "conn": 2, "where": "ws_recv", "expected": false, "code": 1011, "reason": "Internal error encountered."}
+{"scenario": "R2", "run": 3, "t_ms": 5637, "event": "reconnect_attempt_failed", "attempt": 1, "start_ms": 5057, "error": "APIError: 1011 None. Internal error encountered.", "ms_to_error": 580, "since_abort_ms": 581, "setup_sent": true, "server_frames": 0, "close": {"code": 1011, "reason": "Internal error encountered.", "at_ms": 5637}}
+{"scenario": "R2", "run": 3, "t_ms": 6639, "event": "connect_start", "conn": 3, "resume": true, "handle_sha": "b3c04b4a3f"}
+{"scenario": "R2", "run": 3, "t_ms": 6680, "event": "ws_open", "conn": 3}
+{"scenario": "R2", "run": 3, "t_ms": 6680, "event": "setup_sent", "conn": 3, "setup_keys": ["generationConfig", "inputAudioTranscription", "model", "outputAudioTranscription", "sessionResumption", "systemInstruction", "tools"], "session_resumption": {"keys": ["handle"], "handle_present": true, "handle_sha": "b3c04b4a3f", "transparent": null}, "transparent_injected_on_wire": false}
+{"scenario": "R2", "run": 3, "t_ms": 7133, "event": "first_server_message", "conn": 3, "keys": ["setupComplete"], "setup_complete": true, "setup_complete_fields": [], "session_id_sha": null, "since_connect_start_ms": 494, "since_abort_ms": 2077}
+{"scenario": "R2", "run": 3, "t_ms": 7134, "event": "connected", "conn": 3, "sdk_setup_complete": true, "since_connect_start_ms": 495, "since_abort_ms": 2078}
+{"scenario": "R2", "run": 3, "t_ms": 7134, "event": "resumed", "reason": "scripted_disconnect", "conn": 3, "start_ms": 5057, "attempts": 2, "first_raw_ms": 7133, "connected_ms": 7134, "first_raw_has_setup_complete": true, "first_raw_keys": ["setupComplete"], "handle_at_ms": 441, "handle_conn": 1, "abort_to_first_raw_ms": 2077, "abort_to_connected_ms": 2078}
+{"scenario": "R2", "run": 3, "t_ms": 7134, "event": "first_message_after_setup", "conn": 3, "keys": ["sessionResumptionUpdate"], "since_abort_ms": 2078}
+{"scenario": "R2", "run": 3, "t_ms": 7134, "event": "session_resumption_update", "at_ms": 7134, "conn": 3, "keys": ["newHandle", "resumable"], "resumable": true, "handle_present": true, "handle_len": 36, "handle_sha": "d97446318b", "last_consumed_client_message_index": null, "client_msg_index_now": 0, "pending_call_ids": ["call_482668"], "since_tool_call_ms": 3080}
+{"scenario": "R2", "run": 3, "t_ms": 8055, "event": "service_prepared", "job_id": "job-1", "call_id": "call_482668"}
+{"scenario": "R2", "run": 3, "t_ms": 8056, "event": "service_committed", "job_id": "job-1", "call_id": "call_482668", "status": "booked", "slot": "tomorrow 3pm", "confirmation_id": "BK-1001", "connected": true}
+{"scenario": "R2", "run": 3, "t_ms": 8056, "event": "old_response_withheld", "call_id": "call_482668"}
+{"scenario": "R2", "run": 3, "t_ms": 9135, "event": "ask_queued", "settle": "2.0s after resume"}
+{"scenario": "R2", "run": 3, "t_ms": 9137, "event": "user_audio_start", "conn": 3, "label": "ask", "audio_s": 0.746, "chunks": 8, "client_msg_index": 21}
+{"scenario": "R2", "run": 3, "t_ms": 9285, "event": "voice_activity", "conn": 3, "type": "ACTIVITY_START", "audio_offset": "7.040s"}
+{"scenario": "R2", "run": 3, "t_ms": 9836, "event": "user_audio_end", "conn": 3, "label": "ask", "client_msg_index": 28}
+{"scenario": "R2", "run": 3, "t_ms": 10922, "event": "input_transcript", "conn": 3, "text": "Did you book it?"}
+{"scenario": "R2", "run": 3, "t_ms": 10923, "event": "voice_activity", "conn": 3, "type": "ACTIVITY_END", "audio_offset": "8.640s"}
+{"scenario": "R2", "run": 3, "t_ms": 10923, "event": "audio_start", "conn": 3}
+{"scenario": "R2", "run": 3, "t_ms": 10923, "event": "model_transcript", "conn": 3, "text": "I'm currently booking the "}
+{"scenario": "R2", "run": 3, "t_ms": 10961, "event": "model_transcript", "conn": 3, "text": "three p.m. slot"}
+{"scenario": "R2", "run": 3, "t_ms": 11244, "event": "model_transcript", "conn": 3, "text": " for you now."}
+{"scenario": "R2", "run": 3, "t_ms": 11421, "event": "audio_segment", "closed_by": "generation_complete", "conn": 3, "first_ms": 10923, "last_ms": 11421, "chunks": 10, "bytes": 144482}
+{"scenario": "R2", "run": 3, "t_ms": 11421, "event": "generation_complete", "conn": 3}
+{"scenario": "R2", "run": 3, "t_ms": 13936, "event": "turn_complete", "conn": 3}
+{"scenario": "R2", "run": 3, "t_ms": 13936, "event": "usage_metadata", "conn": 3, "total_token_count": 914}
+{"scenario": "R2", "run": 3, "t_ms": 14446, "event": "run_stop_condition", "reason": "settled"}
+{"scenario": "R2", "run": 3, "t_ms": 14459, "event": "session_closed_cleanly", "conn": 3}
+{"scenario": "R2", "run": 3, "t_ms": -1, "event": "run_end", "summary": {"run": 3, "wall": "2026-10-02T22:11:36", "tool_call_ms": 4054, "call": "call_482668 {\"slot\": \"tomorrow 3pm\"}", "disconnect_ms": "5056 (+1002 vs call)", "updates_conn1": 1, "last_update_before_drop": "@441 resumable=True handle=yes", "handle_used": "from @441 (-3613 ms vs call)", "resume_attempts": "2 (1 failed: #1 +581 ms APIError: 1011 None. Internal error encountered.)", "reconnect_ms": "2077 to first msg, 2078 to connect() return", "new_setup_complete": "yes", "session_id_same": "-", "updates_after_resume": 1, "reissued_call": "no", "old_response": "not sent (scenario)", "model_before_drop": "", "model_after_resume_before_ask": "-", "answer": "I'm currently booking the three p.m. slot for you now.", "commits": 1, "commit_ids": "BK-1001<-call_482668", "claim": "neither", "consistent": "no", "go_away": 0, "cancellations": 0, "interrupted": 0, "done_reason": "settled", "errors": "ws_closed conn=2 code=1011 Internal error encountered.", "input_transcripts": ["4052@c1: Put me the 3:00 p.m. slot tomorrow, please.", "10922@c3: Did you book it?"], "last_consumed_idx_seen": []}}
