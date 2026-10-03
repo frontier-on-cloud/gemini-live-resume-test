@@ -1,32 +1,40 @@
 #!/usr/bin/env python3
-"""Render the demo clip: the same silent connection loss with a booking pending, first
-without recovery (round 3, B1 run 1), then with the client-side recovery (stage 2, BR1).
+"""Render the demo clip (v2): the same silent connection loss with a booking pending, first
+without recovery, then with the client-side recovery. Both halves are sessions recorded for
+the clip on 2026-10-03 with --save-audio and the Kokoro-82M af_heart user voice
+(--voice-dir assets/audio/af_heart), in the round 3 container. They are not among the 43
+sessions of the measured tables.
 
-  2 s title card   "Without recovery"
-  real time        results/B1.jsonl run 1, from the session start to 1.5 s after the
-                   second refused resume
-  2.5 s card       "Time skipped": the rest of the 15 minutes is not shown
-  4 s still        the same run at its end, 15 minutes after the loss
-  2 s title card   "With recovery"
-  real time        results/clip/BR1_audio.jsonl run 1 (one BR1 session recorded with
-                   --save-audio for this clip on 2026-10-03; not one of the four BR1 runs
-                   in FINDINGS.md), from 3.6 s (just before the tool call) to 1 s after
-                   the model's last audio
+  2 s title card   "The connection drops during a booking"
+  real time        results/clip/B1_60s_af_heart.jsonl run 1 (B1 timing, resume at
+                   detection then every 10 s, for at most 60 s after the loss), from the
+                   session start to 1.5 s after the later of the first refusal and the commit
+  time compressed  the rest of that session, x4, to 1 s after the last refused resume; the
+                   header says "time compressed x4" and the events axis has a break there
+  5 s still        the end of that session, with the round 3 result: after 15 minutes, still
+                   refused, the user is never told (B1 and B2, FINDINGS.md)
+  2 s card         "With recovery"
+  real time        results/clip/BR1_af_heart.jsonl run 1 (BR1 timing), from the session
+                   start to 1 s after the model's last audio
 
-Every time and text shown is read from those files (ms since session start); nothing is
-sped up inside a real-time part. The second half's model audio is
-results/clip/audio_out/BR1_audio_run1_model.wav, placed as a Live client plays it: each
+Every time and text shown is read from those files (ms since session start). Captions are
+verbatim: the user's from the server's input transcription, the model's from its output
+transcription. Audio: the user clips named in each run's sidecar
+(results/clip/audio_out/*_audio.json, `source`) at their send times, and the model's audio
+(results/clip/audio_out/BR1_af_heart_run1_model.wav) placed as a Live client plays it: each
 chunk at its arrival or right after the previous one, and whatever is still queued when
-`interrupted` arrives is dropped. The user clips are assets/audio/book.wav and
-did_you_book.wav at their send times. One gain (-1 dBFS peak) for the whole track. The
-first half has no model audio: the model said nothing after its tool call.
+`interrupted` arrives is dropped. One gain (-1 dBFS peak) for the whole track. The first
+half has no model audio: the model said nothing between its tool call and the loss. The
+compressed part and the still are silent; nothing was sent or received there.
 
 The drawing code (fonts, colors, panel layout) is the one of
-../gemini-live-stop-test/make_clip.py, copied here so this script runs on its own.
+../gemini-live-stop-test/make_clip.py, copied here so this script runs on its own. The
+first clip (results/clip/lockout-recovery.mp4: B1 run 1 and results/clip/BR1_audio.jsonl,
+macOS `say` voice) was rendered by this script as of commit a2bc678.
 
 Output:
-  results/clip/lockout-recovery.mp4  1280x720, 30 fps, H.264 + AAC (mono, 24 kHz), faststart
-  results/clip/lockout-recovery.gif  800 px wide, 10 fps, no audio
+  results/clip/lockout-recovery-v2.mp4  1280x720, 30 fps, H.264 + AAC (mono, 24 kHz), faststart
+  results/clip/lockout-recovery-v2.gif  800 px wide, 10 fps, no audio
 
 Run (Homebrew ffmpeg is not needed; imageio-ffmpeg ships a static ffmpeg):
   uv run --with imageio-ffmpeg --with pillow --with numpy python make_clip.py
@@ -48,28 +56,30 @@ import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 
 ROOT = Path(__file__).resolve().parent
-RESULTS = ROOT / "results"
-LOCK_JSONL, LOCK_RUN = RESULTS / "B1.jsonl", 1
-REC_JSONL, REC_RUN = RESULTS / "clip" / "BR1_audio.jsonl", 1
-REC_SIDECAR = RESULTS / "clip" / "audio_out" / "BR1_audio_run1_audio.json"
-REC_WAV = RESULTS / "clip" / "audio_out" / "BR1_audio_run1_model.wav"
-CLIPS = ROOT / "assets" / "audio"
-USER_TEXT = {"book_request": "Book me the 3pm slot tomorrow, please.", "ask": "Did you book it?"}
-OUT_DIR = RESULTS / "clip"
-OUT_MP4 = OUT_DIR / "lockout-recovery.mp4"
-OUT_GIF = OUT_DIR / "lockout-recovery.gif"
+CLIP_DIR = ROOT / "results" / "clip"
+LOCK_JSONL, LOCK_RUN = CLIP_DIR / "B1_60s_af_heart.jsonl", 1
+LOCK_SIDECAR = CLIP_DIR / "audio_out" / "B1_60s_af_heart_run1_audio.json"
+REC_JSONL, REC_RUN = CLIP_DIR / "BR1_af_heart.jsonl", 1
+REC_SIDECAR = CLIP_DIR / "audio_out" / "BR1_af_heart_run1_audio.json"
+REC_WAV = CLIP_DIR / "audio_out" / "BR1_af_heart_run1_model.wav"
+OUT_MP4 = CLIP_DIR / "lockout-recovery-v2.mp4"
+OUT_GIF = CLIP_DIR / "lockout-recovery-v2.gif"
 
 TITLE = "Gemini 3.8 Live: the connection drops during a booking"
+VOICE = "Kokoro-82M af_heart"
 W, H, FPS, SS, SR = 1280, 720, 30, 2, 24000
 SPF = SR // FPS
-CARD_S, SKIP_S, STILL_S = 2.0, 3.0, 4.0
-LOCK_TAIL_MS = 1500     # after the second refusal
+CARD_S, END_S, HOLD_S = 2.0, 5.0, 1.5
+FAST = 4                # time compression of the without-recovery excerpt after LOCK_A_TAIL
+LOCK_A_TAIL_MS = 1500   # real time until this long after the first refusal and the commit
+LOCK_B_TAIL_MS = 1000   # compressed part ends this long after the last refusal
 REC_FROM_MS = 0         # second half: the whole session, like the first
 REC_TAIL_MS = 1000
-HOLD_S = 1.5
 GIF_FPS, GIF_W = 10, 800
 PEAK = 0.89             # -1 dBFS
 FFMPEG = imageio_ffmpeg.get_ffmpeg_exe()
+# round 3 (FINDINGS.md, README finding 3): the source of the end card's 15 minutes
+ROUND3 = "round 3 (B1 and B2, 5 runs, 450 of 450 resumes refused, the last at +892 s)"
 
 # colors: the stop-test clip's (light surface, blue for server and model events, green
 # for the committed booking) plus orange for the loss and the refused resumes
@@ -103,22 +113,42 @@ def finder(events: list[dict], where: str):
     return all_of, one
 
 
+def heard(all_of, start_ms: float, end_ms: float) -> str:
+    """The server's input transcription of one user clip, verbatim."""
+    text = "".join(e["text"] for e in all_of("input_transcript") if start_ms <= e["t_ms"] < end_ms)
+    if not text.strip():
+        raise SystemExit(f"no input transcription between {start_ms} and {end_ms} ms")
+    return " ".join(text.split())
+
+
+def user_clips(side: dict, all_of) -> dict:
+    clips = {c["label"]: c for c in side["user_clips"]}
+    for label, c in clips.items():
+        assert c["sent_start_ms"] == all_of("user_audio_start", label=label)[0]["t_ms"], label
+        assert (ROOT / c["source"]).exists(), c["source"]
+    return clips
+
+
 def load_lockout() -> dict:
     ev = load_events(LOCK_JSONL, LOCK_RUN)
     all_of, one = finder(ev, f"{LOCK_JSONL.name} run {LOCK_RUN}")
+    side = json.loads(LOCK_SIDECAR.read_text(encoding="utf-8"))
     bh = one("blackhole_start")
     fails = all_of("reconnect_attempt_failed")
     assert fails and all((f.get("close") or {}).get("code") == 1011 for f in fails), "not all 1011"
     assert not all_of("resumed"), "a resume was accepted"
-    lock = one("lockout")
-    s2c = [e for e in all_of("old_flow_packet") if e["dir"] == "s2c"]
     commits = all_of("service_committed")
     assert len(commits) == 1, "expected one commit"
-    assert not all_of("model_transcript"), "the model spoke; this clip says it did not"
+    assert not all_of("model_transcript") and not side["chunks"], \
+        "the model spoke; this clip says it did not"
     call = one("tool_call_received")
+    run_cfg = one("run_start")
+    assert run_cfg.get("voice_dir") == "assets/audio/af_heart", run_cfg.get("voice_dir")
     return {
         "book_ms": one("user_audio_start", label="book_request")["t_ms"],
         "book_end_ms": one("user_audio_end", label="book_request")["t_ms"],
+        "book_text": heard(all_of, one("user_audio_start", label="book_request")["t_ms"],
+                           call["t_ms"] + 1),
         "tool_call_ms": call["t_ms"], "call_id": call["call_id"],
         "job_ms": one("service_job_started")["t_ms"],
         "latency_ms": int(round(one("service_job_started")["latency_s"] * 1000)),
@@ -127,11 +157,12 @@ def load_lockout() -> dict:
         "attempts": [{"n": f["attempt"], "start": f["start_ms"], "end": f["close"]["at_ms"],
                       "ms": f["ms_to_error"], "code": f["close"]["code"],
                       "reason": f["close"]["reason"]} for f in fails],
+        "period_s": float(run_cfg["round3"]["resume"].split("every ")[1].split("s")[0]),
+        "bh_max_s": float(run_cfg["round3"]["resume"].split("up to ")[1].split("s")[0]),
         "committed_ms": commits[0]["t_ms"], "confirmation": commits[0]["confirmation_id"],
         "slot": commits[0]["slot"],
-        "end_ms": lock["t_ms"], "end_since_bh_ms": lock["since_blackhole_ms"],
-        "first_server_ms": s2c[0]["t_ms"] if s2c else None,
-        "last_server_ms": s2c[-1]["t_ms"] if s2c else None,
+        "end_ms": one("lockout")["t_ms"],
+        "clips": user_clips(side, all_of),
     }
 
 
@@ -149,15 +180,17 @@ def load_recovery() -> dict:
     new_conn = one("new_session_open")
     setup = next(e for e in all_of("first_server_message") if e["conn"] != 1)
     call = one("tool_call_received")
+    book = one("user_audio_start", label="book_request")
     assert len(commits) == 1, "expected one commit"
     assert len(all_of("tool_call_received")) == 1, "a call was re-issued; the clip says it was not"
     assert one("recovery_done")["mode"] == "new_session", "not a fallback run"
     assert all("1011" in f["error"] for f in fails), "a window attempt was not a 1011"
-    clips = {c["label"]: c for c in side["user_clips"]}
-    assert clips["ask"]["sent_start_ms"] == ask["t_ms"], "ask clip offset mismatch"
+    assert one("run_start").get("voice_dir") == "assets/audio/af_heart"
+    answer_ms = next(e["t_ms"] for e in texts if e["t_ms"] >= ask["t_ms"])
     return {
-        "book_ms": one("user_audio_start", label="book_request")["t_ms"],
+        "book_ms": book["t_ms"],
         "book_end_ms": one("user_audio_end", label="book_request")["t_ms"],
+        "book_text": heard(all_of, book["t_ms"], call["t_ms"] + 1),
         "tool_call_ms": call["t_ms"], "call_id": call["call_id"],
         "job_ms": one("service_job_started")["t_ms"],
         "latency_ms": int(round(one("service_job_started")["latency_s"] * 1000)),
@@ -174,9 +207,10 @@ def load_recovery() -> dict:
         "slot": commits[0]["slot"],
         "reply_ms": next(e["t_ms"] for e in texts if e["t_ms"] >= restore["t_ms"]),
         "reply": reply, "ask_ms": ask["t_ms"], "ask_end_ms": one("user_audio_end", label="ask")["t_ms"],
-        "answer_ms": next(e["t_ms"] for e in texts if e["t_ms"] >= ask["t_ms"]), "answer": answer,
+        "ask_text": heard(all_of, ask["t_ms"], answer_ms + 1),
+        "answer_ms": answer_ms, "answer": answer,
         "interrupted_ms": sorted(side["events"]["interrupted_ms"]),
-        "side": side,
+        "side": side, "clips": user_clips(side, all_of),
     }
 
 
@@ -321,15 +355,29 @@ AX_X0, AX_X1, AX_Y = 64, 1216, 666
 ROW_Y = {1: 548, 2: 571, 3: 594, 4: 617}   # label rows (text top), 4 nearest the axis
 F_LAB = ("regular", 19)
 CONV_TOP, CONV_BOT = LEFT[1] + 54, LEFT[3] - 10
+PILL_Y = 50
+F_PILL = ("bold", 16)
 
 
-def draw_header(c: Canvas, t_ms: float, subtitle: str) -> None:
+def pill_box(label: str) -> tuple[float, float, float, float]:
+    w = tw(label, font(*F_PILL)) + 24
+    return (W - M - 4 - w, PILL_Y, W - M - 4, PILL_Y + 24)
+
+
+def draw_header(c: Canvas, t_ms: float, subtitle: str, speed: str) -> None:
+    """speed: the pill under the clock: "real time", "time compressed xN" or "still frame"."""
     c.text(M + 4, 16, TITLE, font("bold", 30), INK)
+    box = pill_box(speed)
+    assert M + 4 + tw(subtitle, font("regular", 18)) < box[0] - 16, f"subtitle too long: {subtitle}"
     c.text(M + 4, 52, subtitle, font("regular", 18), INK_2)
     clock = f"{t_ms / 1000:.2f} s"
     fc = font("mono_bold", 34)
     c.text(W - M - 4, 14, clock, fc, INK, anchor="ra")
     c.text(W - M - 4 - tw(clock, fc) - 10, 26, "t =", font("regular", 22), INK_2, anchor="ra")
+    fast = speed.startswith("time compressed")
+    c.rrect(box, 12, fill=ORANGE if fast else PANEL, outline=None if fast else BORDER, width=1)
+    c.text((box[0] + box[2]) / 2, box[1] + 12, speed, font(*F_PILL), WHITE if fast else INK_2,
+           anchor="mm")
 
 
 def draw_panel(c: Canvas, box, title: str, note: str = "", note_fill=INK_2) -> None:
@@ -416,6 +464,10 @@ def silence_note(t_ms: float, from_ms: float, until_ms: float | None) -> tuple[s
     return f"silence after the request: {duration(t_ms - from_ms)}", ORANGE
 
 
+def user_msg(at_ms: float, text: str) -> dict:
+    return {"kind": "user", "at": at_ms, "role": f"User (voice), {secs(at_ms)}", "text": text}
+
+
 # -- booking service
 def draw_service(c: Canvas, d: dict, t_ms: float, reported: str) -> None:
     draw_panel(c, SERVICE, "Booking service", f"fake service, commits {d['latency_ms'] / 1000:.1f} s after the call")
@@ -461,7 +513,7 @@ def draw_connection(c: Canvas, d: dict, t_ms: float, status: tuple[str, tuple],
         c.text(ix0, y0 + 92 + i * 26, s, fit(s, "regular", 18, ix1 - ix0), col)
 
 
-def attempt_rows(d: dict, t_ms: float, bh_ms: float) -> list[tuple[str, tuple]]:
+def attempt_rows(d: dict, t_ms: float) -> list[tuple[str, tuple]]:
     rows = []
     for a in d["attempts"]:
         if t_ms < a["start"]:
@@ -474,70 +526,106 @@ def attempt_rows(d: dict, t_ms: float, bh_ms: float) -> list[tuple[str, tuple]]:
     return rows
 
 
-# -- events strip
-def strip_layout(ticks: list[tuple], t0: float, t1: float):
+# -- events strip: a linear time axis, or a broken one (real time left of the break,
+# time compressed right of it, each on its own share of the width)
+class Axis:
+    def __init__(self, t0: float, t1: float, brk: float | None = None, frac: float = 0.5,
+                 left_every_s: int = 1, left_label_every: int = 2, right_every_s: int = 10) -> None:
+        self.t0, self.t1, self.brk, self.frac = t0, t1, brk, frac
+        self.left_every_s, self.left_label_every, self.right_every_s = (
+            left_every_s, left_label_every, right_every_s)
+        self.xb = AX_X0 + (AX_X1 - AX_X0) * frac if brk is not None else None
+
+    def x(self, t_ms: float) -> float:
+        t_ms = min(max(t_ms, self.t0), self.t1)
+        if self.brk is None:
+            return AX_X0 + (AX_X1 - AX_X0) * (t_ms - self.t0) / (self.t1 - self.t0)
+        if t_ms <= self.brk:
+            return AX_X0 + (self.xb - AX_X0) * (t_ms - self.t0) / (self.brk - self.t0)
+        return self.xb + (AX_X1 - self.xb) * (t_ms - self.brk) / (self.t1 - self.brk)
+
+    def ticks(self) -> list[tuple[float, str | None]]:
+        """(t_ms, label or None) for each axis tick."""
+        out = []
+        left_end = self.t1 if self.brk is None else self.brk
+        s = math.ceil(self.t0 / 1000 / self.left_every_s) * self.left_every_s
+        while s * 1000 <= left_end:
+            lab = f"{s} s" if (s // self.left_every_s) % self.left_label_every == 0 else None
+            out.append((s * 1000, lab))
+            s += self.left_every_s
+        if self.brk is not None:
+            s = math.ceil(self.brk / 1000 / self.right_every_s) * self.right_every_s
+            while s * 1000 <= self.t1:
+                far = self.x(s * 1000) - self.xb > 60   # no label crowding the break
+                out.append((s * 1000, f"{s} s" if far else None))
+                s += self.right_every_s
+        return out
+
+
+def strip_layout(ticks: list[tuple], axis: Axis):
     f_lab = font(*F_LAB)
     boxes, leaders = [], []
     for label, at, _, row, side, _ in ticks:
-        x, ly = tx(at, t0, t1), ROW_Y[row]
+        x, ly = axis.x(at), ROW_Y[row]
         w = tw(label, f_lab)
         boxes.append((label, (x + 8, ly, x + 8 + w, ly + 21) if side == "right" else (x - 8 - w, ly, x - 8, ly + 21)))
         leaders.append((label, (x - 1, ly + 2, x + 1, AX_Y)))
     return boxes, leaders
 
 
-def overlaps(ticks: list[tuple], t0: float, t1: float, extra: list[tuple] = ()) -> list[str]:
+def overlaps(ticks: list[tuple], axis: Axis, axis_note: str, extra: list[tuple] = ()) -> list[str]:
     def hit(a, b):
         return a[0] < b[2] and b[0] < a[2] and a[1] < b[3] and b[1] < a[3]
-    boxes, leaders = strip_layout(ticks, t0, t1)
+    boxes, leaders = strip_layout(ticks, axis)
     boxes += list(extra)
     fe = font("bold", 22)
-    head = "Events" + "  seconds since session start"
-    boxes.append(("header", (STRIP[0] + 20, STRIP[1] + 12, STRIP[0] + 30 + tw(head, fe), STRIP[1] + 36)))
+    head_w = tw("Events", fe) + 10 + tw(axis_note, font("regular", 18))
+    boxes.append(("header", (STRIP[0] + 20, STRIP[1] + 12, STRIP[0] + 20 + head_w, STRIP[1] + 36)))
     bad = [f"{a!r} x {b!r}" for i, (a, ba) in enumerate(boxes) for b, bb in boxes[i + 1:] if hit(ba, bb)]
     bad += [f"{a!r} x leader of {b!r}" for a, ba in boxes for b, lb in leaders if a != b and hit(ba, lb)]
     bad += [f"{a!r} outside the strip" for a, ba in boxes if ba[0] < STRIP[0] + 8 or ba[2] > STRIP[2] - 8]
     play = (AX_X0 - 7, AX_Y - 22, AX_X1 + 7, AX_Y - 10)
     bad += [f"{a!r} x playhead path" for a, ba in boxes if hit(ba, play)]
+    # axis tick labels must not collide with each other
+    fl = font("regular", 17)
+    labs = [(lab, (axis.x(t) - tw(lab, fl) / 2, axis.x(t) + tw(lab, fl) / 2)) for t, lab in axis.ticks() if lab]
+    bad += [f"axis labels {a!r} x {b!r}" for i, (a, (a0, a1)) in enumerate(labs)
+            for b, (b0, b1) in labs[i + 1:] if a0 < b1 + 6 and b0 < a1 + 6]
     return bad
 
 
-def tx(t_ms: float, t0: float, t1: float) -> float:
-    return AX_X0 + (AX_X1 - AX_X0) * (t_ms - t0) / (t1 - t0)
-
-
-def draw_strip(c: Canvas, ticks: list[tuple], t_ms: float, t0: float, t1: float,
-               every_s: int = 1, label_every: int = 2, playhead: bool = True,
+def draw_strip(c: Canvas, ticks: list[tuple], t_ms: float, axis: Axis, playhead: bool = True,
                axis_note: str = "seconds since session start", marks: list[tuple] = ()) -> None:
     c.rrect(STRIP, 12, fill=PANEL, outline=BORDER, width=1)
     c.text(STRIP[0] + 20, STRIP[1] + 12, "Events", font("bold", 22), INK)
     c.text(STRIP[0] + 20 + tw("Events", font("bold", 22)) + 10, STRIP[1] + 16, axis_note,
            font("regular", 18), INK_2)
-    now_x = tx(min(max(t_ms, t0), t1), t0, t1)
+    now_x = axis.x(t_ms)
     c.line([(AX_X0, AX_Y), (AX_X1, AX_Y)], TRACK, width=3)
     c.line([(AX_X0, AX_Y), (now_x, AX_Y)], INK_3, width=3)
-    first = math.ceil(t0 / 1000 / every_s) * every_s
-    s = first
-    while s * 1000 <= t1:
-        x = tx(s * 1000, t0, t1)
+    for t, lab in axis.ticks():
+        x = axis.x(t)
         c.line([(x, AX_Y + 4), (x, AX_Y + 9)], INK_3, width=1)
-        if (s // every_s) % label_every == 0:
-            c.text(x, AX_Y + 12, f"{s} s", font("regular", 17), INK_3, anchor="ma")
-        s += every_s
-    for at, color in marks:   # small unlabeled marks on the axis (the +15 min still)
+        if lab:
+            c.text(x, AX_Y + 12, lab, font("regular", 17), INK_3, anchor="ma")
+    if axis.xb is not None:   # the break: two slanted strokes across the axis
+        xb = axis.xb
+        c.line([(xb - 5, AX_Y), (xb + 5, AX_Y)], PANEL, width=6)
+        c.line([(xb - 8, AX_Y + 8), (xb - 2, AX_Y - 8)], INK_2, width=2)
+        c.line([(xb + 2, AX_Y + 8), (xb + 8, AX_Y - 8)], INK_2, width=2)
+    for at, color in marks:   # refused resumes without a label: a dot on the axis
         if t_ms >= at:
-            x = tx(at, t0, t1)
-            c.line([(x, AX_Y - 9), (x, AX_Y + 9)], color, width=2)
+            c.dot(axis.x(at), AX_Y, 6, color, ring=PANEL)
     shown = [tk for tk in ticks if t_ms >= tk[1]]
     for label, at, color, row, side, _ in shown:
-        x, ly = tx(at, t0, t1), ROW_Y[row]
+        x, ly = axis.x(at), ROW_Y[row]
         c.line([(x, AX_Y), (x, ly + 2)], color, width=2)
         if side == "right":
             c.text(x + 8, ly, label, font(*F_LAB), INK)
         else:
             c.text(x - 8, ly, label, font(*F_LAB), INK, anchor="ra")
     for label, at, color, row, side, marker in shown:
-        x = tx(at, t0, t1)
+        x = axis.x(at)
         if marker == "ring":
             c.dot(x, AX_Y, 9, PANEL)
             c.ring(x, AX_Y, 9, color, width=2)
@@ -547,27 +635,51 @@ def draw_strip(c: Canvas, ticks: list[tuple], t_ms: float, t0: float, t1: float,
         c.poly([(now_x - 7, AX_Y - 20), (now_x + 7, AX_Y - 20), (now_x, AX_Y - 10)], INK)
 
 
-# ---------------------------------------------------------------- the two halves
+# ---------------------------------------------------------------- without recovery
+LOCK_SUB = "Without recovery. B1 timing, recorded for this clip (not in the measured tables)."
+LOCK_NOTE = f"seconds since session start; right of the break, time compressed ×{FAST}"
+
+
 def lock_ticks(d: dict) -> list[tuple]:
-    a1, a2 = d["attempts"][0], d["attempts"][1]
+    a = d["attempts"]
     return [
         (f"toolCall {secs(d['tool_call_ms'])}", d["tool_call_ms"], BLUE, 4, "left", "dot"),
         (f"network lost {secs(d['bh_ms'])}", d["bh_ms"], ORANGE, 3, "left", "dot"),
         (f"loss detected {secs(d['detect_ms'])}", d["detect_ms"], INK, 2, "left", "dot"),
-        (f"resume #1 refused (1011) {secs(a1['end'])}", a1["end"], ORANGE, 1, "right", "dot"),
+        (f"resume #1 refused (1011) {secs(a[0]['end'])}", a[0]["end"], ORANGE, 1, "right", "dot"),
         (f"committed {secs(d['committed_ms'])}", d["committed_ms"], GREEN, 2, "right", "dot"),
-        (f"resume #2 refused (1011) {secs(a2['end'])}", a2["end"], ORANGE, 1, "left", "dot"),
+        (f"resume #{a[-1]['n']} refused (1011) {secs(a[-1]['end'])}", a[-1]["end"], ORANGE, 1,
+         "left", "dot"),
     ]
 
 
-def render_lock(d: dict, t_ms: float, end_ms: float) -> Image.Image:
-    c = Canvas()
-    draw_header(c, t_ms, "Without recovery. Measured run: B1 run 1 (real packet loss, model idle, "
-                         "resume every 10 s). Real time, session clock.")
+def lock_marks(d: dict) -> list[tuple]:
+    return [(x["end"], ORANGE) for x in d["attempts"][1:-1]]
+
+
+def lock_rows(d: dict, t_ms: float) -> list[tuple[str, tuple]]:
+    """The last three attempts, then the next one (or the end of the 60 s loop)."""
+    rows = attempt_rows(d, t_ms)[-3:]
+    if t_ms >= d["attempts"][0]["end"]:
+        nxt = next((a for a in d["attempts"] if a["start"] > t_ms), None)
+        if nxt is not None:
+            rows.append((f"next attempt at {secs(nxt['start'])} (every {d['period_s']:.0f} s)", INK_3))
+        elif t_ms >= d["attempts"][-1]["end"]:
+            rows.append((f"no attempt after +{d['bh_max_s']:.0f} s: the clip's session stops here",
+                         INK_3))
+    return rows
+
+
+def lock_conversation(d: dict, t_ms: float, c: Canvas) -> None:
     note, col = silence_note(t_ms, d["book_end_ms"], None)
     draw_panel(c, LEFT, "Conversation", note, col)
-    draw_messages(c, [{"kind": "user", "at": d["book_ms"], "role": f"User, {secs(d['book_ms'])}",
-                       "text": USER_TEXT["book_request"]}], t_ms)
+    draw_messages(c, [user_msg(d["book_ms"], d["book_text"])], t_ms)
+
+
+def render_lock(d: dict, t_ms: float, axis: Axis, speed: str) -> Image.Image:
+    c = Canvas()
+    draw_header(c, t_ms, LOCK_SUB, speed)
+    lock_conversation(d, t_ms, c)
     draw_service(c, d, t_ms, "not reported")
     if t_ms < d["bh_ms"]:
         status = ("connected (connection 1, session resumption on)", BLUE)
@@ -575,55 +687,53 @@ def render_lock(d: dict, t_ms: float, end_ms: float) -> Image.Image:
         status = ("packets dropped both ways, nothing closed", ORANGE)
     else:
         status = (f"lost: detected at {secs(d['detect_ms'])}, resuming with the handle", ORANGE)
-    rows = attempt_rows(d, t_ms, d["bh_ms"])
-    shown = [a for a in d["attempts"] if t_ms >= a["end"]]
-    nxt = next((a for a in d["attempts"] if a["start"] > t_ms), None)
-    if shown and nxt is not None and len(rows) < 4:
-        rows.append((f"next attempt at {secs(nxt['start'])} (every 10 s)", INK_3))
-    draw_connection(c, d, t_ms, status, rows)
-    draw_strip(c, lock_ticks(d), t_ms, 0, end_ms)
+    draw_connection(c, d, t_ms, status, lock_rows(d, t_ms))
+    draw_strip(c, lock_ticks(d), t_ms, axis, axis_note=LOCK_NOTE, marks=lock_marks(d))
     return c.frame()
 
 
-def still_ticks(d: dict) -> list[tuple]:
-    return [
-        (f"network lost {secs(d['bh_ms'])}, committed {secs(d['committed_ms'])}",
-         d["committed_ms"], GREEN, 4, "right", "dot"),
-        (f"server's last TCP retransmission {d['last_server_ms'] / 1000:.1f} s",
-         d["last_server_ms"], INK_2, 3, "left", "ring"),
-        (f"resume #{d['attempts'][-1]['n']} refused (1011) {secs(d['attempts'][-1]['end'])}",
-         d["attempts"][-1]["end"], ORANGE, 2, "left", "dot"),
-    ]
+END_BIG = ["After 15 minutes in our tests:", "still refused,", "the user is never told."]
 
 
-def render_still(d: dict) -> Image.Image:
-    t = d["end_ms"]
+def end_small(d: dict) -> str:
+    return (f"The 15 minutes come from {ROUND3}. This session only tried for "
+            f"{d['bh_max_s']:.0f} s after the loss. Here too the model said nothing after its tool "
+            f"call; the booking was committed {(d['committed_ms'] - d['bh_ms']) / 1000:.1f} s "
+            f"after the loss.")
+
+
+def render_end(d: dict, axis: Axis, t_ms: float) -> Image.Image:
     c = Canvas()
-    draw_header(c, t, f"Without recovery. B1 run 1 at its end, {d['end_since_bh_ms'] / 60000:.1f} min "
-                      "after the loss. The time in between is not shown.")
-    note, col = silence_note(t, d["book_end_ms"], None)
-    draw_panel(c, LEFT, "Conversation", note, col)
-    draw_messages(c, [{"kind": "user", "at": d["book_ms"], "role": f"User, {secs(d['book_ms'])}",
-                       "text": USER_TEXT["book_request"]}], t)
-    x0 = LEFT[0] + 20
-    c.text(x0, 300, "+15 min: still refused,", font("bold", 34), INK)
-    c.text(x0, 344, "the user was never told.", font("bold", 34), INK)
-    c.text(x0, 400, "The model said nothing after its tool call; the booking was", font("regular", 18), INK_2)
-    c.text(x0, 424, f"committed {(d['committed_ms'] - d['bh_ms']) / 1000:.1f} s after the loss.",
-           font("regular", 18), INK_2)
-    draw_service(c, d, t, "never reported")
+    draw_header(c, t_ms, f"Without recovery. End of the clip's session, {d['bh_max_s']:.0f} s "
+                         "resume loop. Below: what round 3 found.", "still frame")
+    lock_conversation(d, t_ms, c)
+    x0, room = LEFT[0] + 20, LEFT[2] - LEFT[0] - 40
+    size = min(fit(s, "bold", 30, room).size for s in END_BIG) // SS
+    y = CONV_TOP + message_blocks([user_msg(d["book_ms"], d["book_text"])])[0]["h"] + 18
+    for s in END_BIG:
+        c.text(x0, y, s, font("bold", size), INK)
+        y += size + 8
+    y += 14
+    for s in wrap(end_small(d), font("regular", 17), room):
+        c.text(x0, y, s, font("regular", 17), INK_2)
+        y += 22
+    assert y < LEFT[3] - 8, "end text overflows the panel"
+    draw_service(c, d, t_ms, "never reported")
     a = d["attempts"]
-    lo = min(x["ms"] for x in a)
-    hi = max(x["ms"] for x in a)
+    lo, hi = min(x["ms"] for x in a), max(x["ms"] for x in a)
     rows = [(f"resume #1 to #{len(a)}, from {secs(a[0]['start'])} to {secs(a[-1]['start'])}", INK),
             (f"all {len(a)} closed {a[0]['code']} “{a[0]['reason']}”", INK),
             (f"each after {lo} to {hi} ms; none hung, none accepted", INK),
             ("the old socket is still open on the client", INK_2)]
-    draw_connection(c, d, t, ("locked out: no resume accepted in 15 min", ORANGE), rows)
-    draw_strip(c, still_ticks(d), t, 0, 900_000, every_s=60, label_every=2, playhead=False,
-               axis_note="the whole run, seconds since session start",
-               marks=[(x["end"], ORANGE) for x in a])
+    draw_connection(c, d, t_ms, (f"locked out: no resume accepted in {d['bh_max_s']:.0f} s", ORANGE),
+                    rows)
+    draw_strip(c, lock_ticks(d), t_ms, axis, playhead=False, axis_note=LOCK_NOTE,
+               marks=lock_marks(d))
     return c.frame()
+
+
+# ---------------------------------------------------------------- with recovery
+REC_SUB = "With recovery. BR1 timing, recorded for this clip (not in the measured tables)."
 
 
 def rec_ticks(d: dict) -> list[tuple]:
@@ -647,24 +757,22 @@ def rec_messages(d: dict, cut_ms: float | None) -> list[dict]:
     excerpt = f"{intro} […] {status} […]"
     foot = (f"playback stopped at {secs(cut_ms)}: the user spoke (interrupted)" if cut_ms else None)
     return [
-        {"kind": "user", "at": d["book_ms"], "role": f"User, {secs(d['book_ms'])}",
-         "text": USER_TEXT["book_request"]},
+        user_msg(d["book_ms"], d["book_text"]),
         {"kind": "note", "at": d["restore_ms"],
          "role": f"App to the new session (text), {secs(d['restore_ms'])}: last turn + note",
          "text": excerpt},
         {"kind": "model", "at": d["reply_ms"], "role": f"Model (spoken reply), {secs(d['reply_ms'])}",
          "text": d["reply"], "foot": foot, "foot_at": cut_ms or 0},
-        {"kind": "user", "at": d["ask_ms"], "role": f"User, {secs(d['ask_ms'])}", "text": USER_TEXT["ask"]},
+        user_msg(d["ask_ms"], d["ask_text"]),
         {"kind": "model", "at": d["answer_ms"], "role": f"Model (spoken reply), {secs(d['answer_ms'])}",
          "text": d["answer"]},
     ]
 
 
-def render_rec(d: dict, t_ms: float, t0: float, t1: float, cut_ms: float | None,
+def render_rec(d: dict, t_ms: float, axis: Axis, cut_ms: float | None,
                first_audio_ms: float) -> Image.Image:
     c = Canvas()
-    draw_header(c, t_ms, "With recovery. Measured run: BR1, one session recorded with audio for "
-                         "this clip. Real time, session clock.")
+    draw_header(c, t_ms, REC_SUB, "real time")
     note, col = silence_note(t_ms, d["book_end_ms"], first_audio_ms)
     draw_panel(c, LEFT, "Conversation", note, col)
     draw_messages(c, rec_messages(d, cut_ms), t_ms)
@@ -679,8 +787,8 @@ def render_rec(d: dict, t_ms: float, t0: float, t1: float, cut_ms: float | None,
         status = ("window over: opening a new session, no handle", ORANGE)
     else:
         status = (f"new session up at {secs(d['setup_ms'])}; old call id left unanswered", BLUE)
-    draw_connection(c, d, t_ms, status, attempt_rows(d, t_ms, d["bh_ms"]))
-    draw_strip(c, rec_ticks(d), t_ms, t0, t1, marks=[(x["end"], ORANGE) for x in d["attempts"][1:]])
+    draw_connection(c, d, t_ms, status, attempt_rows(d, t_ms))
+    draw_strip(c, rec_ticks(d), t_ms, axis, marks=[(x["end"], ORANGE) for x in d["attempts"][1:]])
     return c.frame()
 
 
@@ -713,67 +821,77 @@ def main() -> None:
     cut = next((t for t in R["interrupted_ms"] if t > R["reply_ms"]), None)
     first_audio = min(s for s, _ in segments)
     model_end = max(s + len(x) * 1000 / SR for s, x in segments)
-    lock_end = L["attempts"][1]["end"] + LOCK_TAIL_MS
+    lock_a_end = max(L["attempts"][0]["end"], L["committed_ms"]) + LOCK_A_TAIL_MS
+    lock_b_end = L["attempts"][-1]["end"] + LOCK_B_TAIL_MS
+    lock_axis = Axis(0, lock_b_end, brk=lock_a_end, frac=0.5)
     rec_t0, rec_t1 = REC_FROM_MS, model_end + REC_TAIL_MS
-    skipped_ms = L["end_ms"] - lock_end
-    more = sum(1 for x in L["attempts"] if x["start"] > lock_end)
+    rec_axis = Axis(rec_t0, rec_t1)
+    lock_clip_end = L["clips"]["book_request"]["sent_start_ms"] + L["clips"]["book_request"]["duration_ms"]
+    assert lock_clip_end < lock_a_end, "user audio would fall in the compressed part"
 
-    print(f"without recovery: book {L['book_ms']}, toolCall {L['tool_call_ms']}, loss {L['bh_ms']}, "
-          f"detected {L['detect_ms']}, commit {L['committed_ms']}, attempts {len(L['attempts'])} "
-          f"(shown in real time: {sum(1 for x in L['attempts'] if x['end'] <= lock_end)}), "
-          f"real time to {lock_end} ms, skipped {skipped_ms} ms, end {L['end_ms']}")
-    print(f"with recovery: loss {R['bh_ms']}, detected {R['detect_ms']}, window end {R['window_end_ms']}, "
-          f"commit {R['committed_ms']}, setupComplete {R['setup_ms']}, restore {R['restore_ms']}, "
-          f"model {R['reply_ms']} ({R['reply']!r}), ask {R['ask_ms']}, interrupted {R['interrupted_ms']}, "
-          f"answer {R['answer_ms']} ({R['answer']!r}); model audio "
+    print(f"without recovery: book {L['book_ms']} ({L['book_text']!r}), toolCall {L['tool_call_ms']}, "
+          f"loss {L['bh_ms']}, detected {L['detect_ms']}, commit {L['committed_ms']}, "
+          f"attempts {len(L['attempts'])} ends {[x['end'] for x in L['attempts']]}, real time to "
+          f"{lock_a_end} ms, compressed x{FAST} to {lock_b_end} ms, lockout {L['end_ms']}")
+    print(f"with recovery: book {R['book_ms']} ({R['book_text']!r}), loss {R['bh_ms']}, detected "
+          f"{R['detect_ms']}, window end {R['window_end_ms']}, commit {R['committed_ms']}, setupComplete "
+          f"{R['setup_ms']}, restore {R['restore_ms']}, model {R['reply_ms']} ({R['reply']!r}), ask "
+          f"{R['ask_ms']} ({R['ask_text']!r}), interrupted {R['interrupted_ms']}, answer "
+          f"{R['answer_ms']} ({R['answer']!r}); model audio "
           + ", ".join(f"{s:.0f}-{s + len(x) * 1000 / SR:.0f}" for s, x in segments))
 
-    bad = (overlaps(lock_ticks(L), 0, lock_end) + overlaps(rec_ticks(R), rec_t0, rec_t1)
-           + overlaps(still_ticks(L), 0, 900_000))
+    bad = (overlaps(lock_ticks(L), lock_axis, LOCK_NOTE)
+           + overlaps(rec_ticks(R), rec_axis, "seconds since session start"))
     for b in bad:
         print(f"OVERLAP in the events strip: {b}")
     if bad:
         raise SystemExit("fix the strip layout first")
 
     cards = {
-        "card_without": render_card([("Without recovery", 46, INK)]),
-        "skip": render_card([("Time skipped", 46, INK),
-                             (f"{duration(skipped_ms)} of this run are not shown: "
-                              f"{more} more resume attempts, one every 10 s.", 24, INK_2)]),
+        "title": render_card([("The connection drops during a booking", 46, INK),
+                              ("First without recovery, then with it.", 26, INK_2),
+                              (f"User voice: {VOICE} (open-weight TTS, Apache-2.0), sent to the "
+                               "model as live audio.", 20, INK_3)]),
         "card_with": render_card([("With recovery", 46, INK)]),
     }
+    speed_b = f"time compressed ×{FAST}"
     if a.preview:
         a.preview.mkdir(parents=True, exist_ok=True)
         for k, im in cards.items():
             im.save(a.preview / f"card-{k}.png")
-        for t in (L["bh_ms"] + 500, L["committed_ms"] + 300, 12_000, lock_end):
-            render_lock(L, t, lock_end).save(a.preview / f"lock-{int(t):05d}.png")
-        render_still(L).save(a.preview / "still.png")
+        for t in (L["bh_ms"] + 500, L["committed_ms"] + 300, lock_a_end - 1):
+            render_lock(L, t, lock_axis, "real time").save(a.preview / f"lock-{int(t):05d}.png")
+        for t in (30_000, L["attempts"][-1]["end"] + 200):
+            render_lock(L, t, lock_axis, speed_b).save(a.preview / f"lock-{int(t):05d}.png")
+        render_end(L, lock_axis, lock_b_end).save(a.preview / "end.png")
         for t in (R["detect_ms"] + 1200, R["restore_ms"] + 300, R["reply_ms"] + 1500,
                   R["ask_ms"] + 600, R["answer_ms"] + 1500, rec_t1):
-            render_rec(R, t, rec_t0, rec_t1, cut, first_audio).save(a.preview / f"rec-{int(t):05d}.png")
+            render_rec(R, t, rec_axis, cut, first_audio).save(a.preview / f"rec-{int(t):05d}.png")
         print(f"stills in {a.preview}")
         return
 
-    n_card, n_skip, n_still = (int(round(s * FPS)) for s in (CARD_S, SKIP_S, STILL_S))
-    n_lock = math.ceil(lock_end / 1000 * FPS)
+    n_card, n_end = (int(round(s * FPS)) for s in (CARD_S, END_S))
+    n_a = math.ceil(lock_a_end / 1000 * FPS)
+    n_b = math.ceil((lock_b_end - lock_a_end) / 1000 / FAST * FPS)
     n_rec = math.ceil((rec_t1 - rec_t0) / 1000 * FPS)
     n_hold = int(round(HOLD_S * FPS))
-    parts = [("card_without", n_card), ("without", n_lock), ("skip", n_skip), ("still", n_still),
+    parts = [("title", n_card), ("without", n_a), ("compressed", n_b), ("end", n_end),
              ("card_with", n_card), ("with", n_rec + n_hold)]
     total = sum(n for _, n in parts)
     print("frames: " + " + ".join(f"{k} {n}" for k, n in parts) + f" = {total} ({total / FPS:.2f} s)")
 
-    # audio: one track, one gain
+    # audio: one track, one gain; the user clips are the files the harness sent
     track = np.zeros(total * SPF, dtype=np.float32)
     off = n_card * SPF
-    lock_mix = np.zeros(n_lock * SPF, dtype=np.float32)
-    place(lock_mix, decode(CLIPS / "book.wav"), L["book_ms"])
+    lock_mix = np.zeros(n_a * SPF, dtype=np.float32)
+    for c in L["clips"].values():
+        place(lock_mix, decode(ROOT / c["source"]), c["sent_start_ms"])
     track[off: off + len(lock_mix)] += lock_mix
-    off = (n_card + n_lock + n_skip + n_still + n_card) * SPF
+    rec_off_frames = n_card + n_a + n_b + n_end + n_card
+    off = rec_off_frames * SPF
     rec_mix = np.zeros((n_rec + n_hold) * SPF, dtype=np.float32)
-    place(rec_mix, decode(CLIPS / "book.wav"), R["book_ms"] - rec_t0)
-    place(rec_mix, decode(CLIPS / "did_you_book.wav"), R["ask_ms"] - rec_t0)
+    for c in R["clips"].values():
+        place(rec_mix, decode(ROOT / c["source"]), c["sent_start_ms"] - rec_t0)
     for start, seg in segments:
         place(rec_mix, seg, start - rec_t0)
     track[off: off + len(rec_mix)] += rec_mix
@@ -782,8 +900,15 @@ def main() -> None:
     track *= gain
     print(f"audio: one gain {20 * math.log10(gain):+.2f} dB (raw peak {peak:.3f} -> -1 dBFS); "
           f"voiced rms {voiced_rms_db(track):.1f} dBFS")
+    placements = ([(f"without: user {k} ({c['source']})", n_card / FPS + c["sent_start_ms"] / 1000)
+                   for k, c in L["clips"].items()]
+                  + [(f"with: user {k} ({c['source']})", rec_off_frames / FPS + c["sent_start_ms"] / 1000)
+                     for k, c in R["clips"].items()]
+                  + [("with: model audio, first chunk", rec_off_frames / FPS + first_audio / 1000),
+                     ("with: model audio, end", rec_off_frames / FPS + model_end / 1000)])
+    print("audio placements (s in the clip): " + "; ".join(f"{k} {v:.3f}" for k, v in placements))
 
-    OUT_DIR.mkdir(parents=True, exist_ok=True)
+    OUT_MP4.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory() as tmp:
         mix_path = Path(tmp) / "mix.wav"
         pcm = np.clip(np.round(track * 32767), -32768, 32767).astype("<i2")
@@ -804,17 +929,22 @@ def main() -> None:
                 buf = cards[kind].tobytes()
                 for _ in range(n):
                     proc.stdin.write(buf)
-            elif kind == "still":
-                buf = render_still(L).tobytes()
-                for _ in range(n):
-                    proc.stdin.write(buf)
             elif kind == "without":
                 for i in range(n):
-                    proc.stdin.write(render_lock(L, min(i * 1000 / FPS, lock_end), lock_end).tobytes())
+                    t = min(i * 1000 / FPS, lock_a_end)
+                    proc.stdin.write(render_lock(L, t, lock_axis, "real time").tobytes())
+            elif kind == "compressed":
+                for i in range(n):
+                    t = min(lock_a_end + i * 1000 * FAST / FPS, lock_b_end)
+                    proc.stdin.write(render_lock(L, t, lock_axis, speed_b).tobytes())
+            elif kind == "end":
+                buf = render_end(L, lock_axis, lock_b_end).tobytes()
+                for _ in range(n):
+                    proc.stdin.write(buf)
             elif kind == "with":
                 for i in range(n):
                     t = min(rec_t0 + i * 1000 / FPS, rec_t1)
-                    proc.stdin.write(render_rec(R, t, rec_t0, rec_t1, cut, first_audio).tobytes())
+                    proc.stdin.write(render_rec(R, t, rec_axis, cut, first_audio).tobytes())
         proc.stdin.close()
         if proc.wait() != 0:
             raise SystemExit("ffmpeg (mp4) failed")

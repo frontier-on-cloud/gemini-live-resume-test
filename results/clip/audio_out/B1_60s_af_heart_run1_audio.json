@@ -1,0 +1,37 @@
+{
+ "scenario": "B1_60s_af_heart",
+ "run": 1,
+ "wall": "2026-10-03T13:14:02",
+ "model": "gemini-3.8-live",
+ "time_base": "ms since session start, the t_ms of the JSONL. t_ms of a model chunk is when the harness received it; sent_start_ms / sent_end_ms of a user clip are when its first / last 100 ms chunk was sent.",
+ "model_audio": {
+  "file": null,
+  "sample_rate": 24000,
+  "channels": 1,
+  "sample_width_bits": 16,
+  "duration_s": 0.0,
+  "chunks": 0,
+  "note": "Chunks are concatenated in arrival order with no gaps. The server sends audio faster than real time, so wav_offset_ms is not the arrival time: place each chunk at its t_ms or later. A client that plays audio drops what is still queued when `interrupted` arrives; this file keeps everything received."
+ },
+ "chunks": [],
+ "user_clips": [
+  {
+   "label": "book_request",
+   "conn": 1,
+   "sent_start_ms": 342,
+   "sent_end_ms": 2649,
+   "source": "assets/audio/af_heart/book.wav",
+   "sample_rate": 16000,
+   "duration_ms": 2379.1
+  }
+ ],
+ "events": {
+  "interrupted_ms": [],
+  "generation_complete_ms": [
+   3803
+  ],
+  "turn_complete_ms": [
+   3804
+  ]
+ }
+}

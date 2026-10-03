@@ -244,28 +244,40 @@ results, including the offline container check of the blackhole.
 - `results/repro/`: stdout of the minimal reproduction.
 - `results/figures/lockout.png`: the lockout (B1, B2) and the recovery (BR1) in one figure,
   drawn from the JSONL by `make_figure.py`.
-- `results/clip/`: `lockout-recovery.mp4` (and a GIF), B1 run 1 then one BR1 session, drawn
-  by `make_clip.py`. That BR1 session was recorded on 2026-10-03 for the clip only, with
-  `--save-audio` (the model's output audio and its chunk times are in `results/clip/audio_out/`).
-  It is not one of the 43 sessions above, and its JSONL, ledger and summary stay in
-  `results/clip/`. It behaved like the four BR1 runs: 4 refusals, a new session 3.91 s after
-  detection, first model audio 6.46 s after the loss, one booking, a correct answer.
+- `results/clip/`: the demo clips and the sessions recorded for them, with `--save-audio`
+  (the model's output audio and its chunk times are in `results/clip/audio_out/`). None of
+  these sessions is one of the 43 above; their JSONL, ledger and summary stay in
+  `results/clip/`.
+  - `lockout-recovery-v2.mp4` (and a GIF, 52.5 s), drawn by `make_clip.py`: two sessions
+    recorded on 2026-10-03 with the Kokoro `af_heart` user voice (see Files), in the round 3
+    container. `B1_60s_af_heart`: B1 timing, the resume loop stopped 60 s after the loss
+    (`--bh-max 60`), so it is a 60 s excerpt of what B1 measured over 15 minutes; 6 of 6
+    resumes refused with `1011`, one booking, the model silent after its tool call.
+    `BR1_af_heart`: BR1 timing; 4 refusals, a new session 3.75 s after detection, first
+    model audio 6.57 s after the loss, one booking, no re-issued call, a correct answer. The
+    clip shows the first session in real time to 9.3 s, the rest of it compressed ×4 (marked
+    on screen), then the second in real time.
+  - `lockout-recovery.mp4` (and a GIF), the first clip: B1 run 1 then one BR1 session
+    (`BR1_audio`), macOS `say` voice, drawn by `make_clip.py` as of commit `a2bc678`. That
+    BR1 session behaved like the four BR1 runs: 4 refusals, a new session 3.91 s after
+    detection, first model audio 6.46 s after the loss, one booking, a correct answer.
 
 ```sh
 uv run --with matplotlib python make_figure.py
 uv run --with imageio-ffmpeg --with pillow --with numpy python make_clip.py
-# the clip session (round 3 container; results/clip mounted as the results dir):
-docker run --rm --cap-add NET_ADMIN -e TZ=Europe/Paris -v $PWD/.env:/app/.env:ro \
-  -v $PWD/results/clip:/app/results resume-test python resume_test.py --scenario BR1 -n 1 \
-  --save-audio --name BR1_audio --budget 1
+# the clip sessions (round 3 container; results/clip mounted as the results dir):
+R="docker run --rm --cap-add NET_ADMIN -e TZ=Europe/Paris -v $PWD/.env:/app/.env:ro \
+  -v $PWD/results/clip:/app/results resume-test python resume_test.py -n 1 --save-audio"
+$R --scenario B1 --bh-max 60 --voice-dir assets/audio/af_heart --name B1_60s_af_heart
+$R --scenario BR1 --voice-dir assets/audio/af_heart --name BR1_af_heart
 ```
 
 ## Limits
 
 - Small N: 1 to 4 runs per scenario. One network path, one model, the Gemini Developer API
   only (not Vertex AI, now Gemini Enterprise Agent Platform), two days.
-- The speech is synthetic (macOS `say`, one voice, digital silence between utterances),
-  and the booking backend is a fake in-process job.
+- The speech is synthetic (macOS `say`, one voice, digital silence between utterances; the
+  v2 clip sessions use Kokoro `af_heart`), and the booking backend is a fake in-process job.
 - Round 2's freeze is application-level: the proxy's kernel still ACKs and answers TCP
   probes. Round 3 removes that caveat with real packet loss, but through Colima's vzNAT
   and three packet-level NATs, on one home connection.
@@ -312,7 +324,12 @@ they do say.
 - `introspect.py`: prints the SDK surface used (no network, no key).
 - `Dockerfile`: the round 3 and stage 2 client container.
 - `assets/audio/`: the four speech clips, 16 kHz 16-bit mono (macOS `say`, voice
-  Samantha).
+  Samantha), used by every measured session (the default of `--voice-dir`).
+- `assets/audio/af_heart/`: the same four lines spoken by `af_heart` (American English,
+  female), a voice of [Kokoro-82M](https://huggingface.co/hexgrad/Kokoro-82M), an
+  open-weight text-to-speech model, generated offline. Weights, voice packs and inference
+  code are Apache-2.0, which sets no condition on generated audio. Same format as above.
+  Used by the v2 clip sessions with `--voice-dir assets/audio/af_heart`.
 - `.env.example`: the `GEMINI_API_KEY=` placeholder; `.env` is git-ignored.
 
 An AI coding agent wrote the harness under my direction; the setup and the claims were

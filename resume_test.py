@@ -55,6 +55,9 @@ ablation (summary only). The control BR0 is B1 with --bh-period 1 --bh-max 60.
 --save-audio (clip material, as in ../gemini-live-stop-test) writes the model's output
 audio of each run to <results-dir>/audio_out/<name>_run<N>_model.wav, plus a JSON
 sidecar with each chunk's arrival time and connection and each user clip's send times.
+--voice-dir takes the user clips from another folder with the same four file names
+(default assets/audio, the macOS `say` voice of every published run; assets/audio/
+af_heart is the Kokoro-82M af_heart voice used for the second clip).
 
 A raw tap replaces google.genai.live.ws_connect so every frame is seen, including the
 first server message, which the SDK consumes inside connect(). With
@@ -108,7 +111,7 @@ SYSTEM_INSTRUCTION = (
     "to one or two short sentences. If the user tells you to stop or cancel, "
     "tell them plainly whether the booking was already made or not."
 )
-AUDIO_DIR = HERE / "assets" / "audio"
+DEFAULT_VOICE_DIR = "assets/audio"   # --voice-dir default: the macOS `say` clips
 AUDIO_RATE = 16000
 AUDIO_MIME = f"audio/pcm;rate={AUDIO_RATE}"
 CHUNK_S = 0.1
@@ -1970,7 +1973,8 @@ async def run_once(args: argparse.Namespace, run: int, out: JsonlWriter, client:
                 "reconnect_retries": args.reconnect_retries},
             clips_s={k: round(pcm_seconds(v), 3) for k, v in args.clips.items()},
             chunk_ms=int(CHUNK_S * 1000), mime_type=AUDIO_MIME,
-            **({"save_audio": True} if getattr(args, "save_audio", False) else {}))
+            **({"save_audio": True} if getattr(args, "save_audio", False) else {}),
+            **({"voice_dir": args.voice_dir} if args.voice_dir != DEFAULT_VOICE_DIR else {}))
     TAP.inject_transparent = args.inject_transparent
     script_task: asyncio.Task | None = None
     try:
@@ -2140,8 +2144,8 @@ def save_run_audio(st: RunState, out_dir: Path) -> dict:
     user = []
     for c in st.clip_sends:
         src = CLIP_SOURCES.get(c["label"], "did_you_book.wav")
-        user.append(c | {"source": f"assets/audio/{src}", "sample_rate": AUDIO_RATE,
-                         "duration_ms": round(pcm_seconds(load_pcm(AUDIO_DIR / src)) * 1000, 1)})
+        user.append(c | {"source": f"{a.voice_dir}/{src}", "sample_rate": AUDIO_RATE,
+                         "duration_ms": round(pcm_seconds(load_pcm(a.voice_path / src)) * 1000, 1)})
     sidecar = {
         "scenario": a.name, "run": st.run, "wall": st.wall, "model": a.model,
         "time_base": "ms since session start, the t_ms of the JSONL. t_ms of a model chunk "
@@ -2591,12 +2595,13 @@ def summary_columns(scenario: str) -> list[str]:
 def summary_header(cfg: dict, when: str) -> str:
     """cfg uses the key names of the run_start event (make_summary.py passes those)."""
     drop = f"drop_mode={cfg['drop_mode']}, " if cfg.get("drop_mode") else ""
+    voice = f", user clips from {cfg['voice_dir']}" if cfg.get("voice_dir") else ""
     return (f"model `{cfg['model']}`, google-genai {cfg['sdk']}, {when}, scenario "
             f"{cfg['scenario']}, disconnect_after={cfg['disconnect_after_s']}s, "
             f"latency={cfg['latency_s']}s (prepare, then commit at once, no guard), "
             f"old_response={cfg['old_response']}, inject_transparent={cfg['inject_transparent']}, "
-            f"{drop}speech input (16 kHz PCM, 100 ms chunks, real time). Times are ms since "
-            f"session start.")
+            f"{drop}speech input (16 kHz PCM, 100 ms chunks, real time{voice}). Times are ms "
+            f"since session start.")
 
 
 def summary_block(title: str, header: str, cols: list[str], rows: list[dict]) -> str:
@@ -2614,6 +2619,8 @@ def append_summary(path: Path, args: argparse.Namespace, rows: list[dict]) -> st
            "disconnect_after_s": args.disconnect_after, "latency_s": args.latency,
            "old_response": args.old_response, "inject_transparent": args.inject_transparent,
            "drop_mode": args.drop_mode}
+    if args.voice_dir != DEFAULT_VOICE_DIR:
+        cfg["voice_dir"] = args.voice_dir
     block = summary_block(args.name, summary_header(cfg, datetime.now().strftime("%Y-%m-%d %H:%M")),
                           summary_columns(args.scenario), rows)
     with path.open("a", encoding="utf-8") as fh:
@@ -2723,6 +2730,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                    help="write each run's model output audio to <results-dir>/audio_out/"
                         "<name>_run<N>_model.wav plus a JSON sidecar with chunk arrival "
                         "times and user clip send times (clip material; same run otherwise)")
+    p.add_argument("--voice-dir", default=DEFAULT_VOICE_DIR,
+                   help="folder of the user clips (book.wav, did_you_book.wav, bring.wav, "
+                        "hello.wav), relative to this script. The default is the macOS `say` "
+                        "voice of every published run; assets/audio/af_heart is the Kokoro-82M "
+                        "af_heart voice")
     p.add_argument("--results-dir", default=str(HERE / "results"))
     p.add_argument("-v", "--verbose", action="store_true")
     args = p.parse_args(argv)
@@ -2731,6 +2743,8 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     args.latency = lat if args.latency is None else args.latency
     args.old_response = old
     args.name = args.name or args.scenario
+    args.voice_dir = Path(args.voice_dir).as_posix().rstrip("/")
+    args.voice_path = HERE / args.voice_dir
     if args.scenario.startswith("N"):
         args.reconnect_retries = max(args.reconnect_retries, 5)   # 1, 2, 4, 8, 16 s
         args.run_timeout = max(args.run_timeout, 300.0)
@@ -2758,12 +2772,13 @@ def sessions_used(path: Path) -> int:
 
 async def amain(args: argparse.Namespace) -> int:
     try:
-        args.clips = {"book": load_pcm(AUDIO_DIR / "book.wav"),
-                      "ask": load_pcm(AUDIO_DIR / "did_you_book.wav")}
+        voice = args.voice_path
+        args.clips = {"book": load_pcm(voice / "book.wav"),
+                      "ask": load_pcm(voice / "did_you_book.wav")}
         if args.scenario in ("R4", "B2", "BR2"):
-            args.clips["followup"] = load_pcm(AUDIO_DIR / "bring.wav")
+            args.clips["followup"] = load_pcm(voice / "bring.wav")
         if args.scenario == "R0":
-            args.clips["hello"] = load_pcm(AUDIO_DIR / "hello.wav")
+            args.clips["hello"] = load_pcm(voice / "hello.wav")
     except Exception as exc:
         print(f"cannot load audio clips: {exc}", file=sys.stderr)
         return 2

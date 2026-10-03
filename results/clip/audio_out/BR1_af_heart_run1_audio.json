@@ -1,0 +1,229 @@
+{
+ "scenario": "BR1_af_heart",
+ "run": 1,
+ "wall": "2026-10-03T13:15:26",
+ "model": "gemini-3.8-live",
+ "time_base": "ms since session start, the t_ms of the JSONL. t_ms of a model chunk is when the harness received it; sent_start_ms / sent_end_ms of a user clip are when its first / last 100 ms chunk was sent.",
+ "model_audio": {
+  "file": "BR1_af_heart_run1_model.wav",
+  "sample_rate": 24000,
+  "channels": 1,
+  "sample_width_bits": 16,
+  "duration_s": 7.01,
+  "chunks": 22,
+  "note": "Chunks are concatenated in arrival order with no gaps. The server sends audio faster than real time, so wav_offset_ms is not the arrival time: place each chunk at its t_ms or later. A client that plays audio drops what is still queued when `interrupted` arrives; this file keeps everything received."
+ },
+ "chunks": [
+  {
+   "t_ms": 11386,
+   "conn": 6,
+   "turn": 1,
+   "bytes": 6240,
+   "wav_offset_ms": 0.0,
+   "duration_ms": 130.0
+  },
+  {
+   "t_ms": 11463,
+   "conn": 6,
+   "turn": 1,
+   "bytes": 17280,
+   "wav_offset_ms": 130.0,
+   "duration_ms": 360.0
+  },
+  {
+   "t_ms": 11549,
+   "conn": 6,
+   "turn": 1,
+   "bytes": 13440,
+   "wav_offset_ms": 490.0,
+   "duration_ms": 280.0
+  },
+  {
+   "t_ms": 11650,
+   "conn": 6,
+   "turn": 1,
+   "bytes": 19200,
+   "wav_offset_ms": 770.0,
+   "duration_ms": 400.0
+  },
+  {
+   "t_ms": 11720,
+   "conn": 6,
+   "turn": 1,
+   "bytes": 17280,
+   "wav_offset_ms": 1170.0,
+   "duration_ms": 360.0
+  },
+  {
+   "t_ms": 11877,
+   "conn": 6,
+   "turn": 1,
+   "bytes": 28800,
+   "wav_offset_ms": 1530.0,
+   "duration_ms": 600.0
+  },
+  {
+   "t_ms": 11946,
+   "conn": 6,
+   "turn": 1,
+   "bytes": 19200,
+   "wav_offset_ms": 2130.0,
+   "duration_ms": 400.0
+  },
+  {
+   "t_ms": 12034,
+   "conn": 6,
+   "turn": 1,
+   "bytes": 15360,
+   "wav_offset_ms": 2530.0,
+   "duration_ms": 320.0
+  },
+  {
+   "t_ms": 12117,
+   "conn": 6,
+   "turn": 1,
+   "bytes": 15360,
+   "wav_offset_ms": 2850.0,
+   "duration_ms": 320.0
+  },
+  {
+   "t_ms": 15534,
+   "conn": 6,
+   "turn": 3,
+   "bytes": 2,
+   "wav_offset_ms": 3170.0,
+   "duration_ms": 0.0
+  },
+  {
+   "t_ms": 15584,
+   "conn": 6,
+   "turn": 3,
+   "bytes": 7680,
+   "wav_offset_ms": 3170.0,
+   "duration_ms": 160.0
+  },
+  {
+   "t_ms": 15613,
+   "conn": 6,
+   "turn": 3,
+   "bytes": 9600,
+   "wav_offset_ms": 3330.0,
+   "duration_ms": 200.0
+  },
+  {
+   "t_ms": 15669,
+   "conn": 6,
+   "turn": 3,
+   "bytes": 9600,
+   "wav_offset_ms": 3530.0,
+   "duration_ms": 200.0
+  },
+  {
+   "t_ms": 15727,
+   "conn": 6,
+   "turn": 3,
+   "bytes": 9600,
+   "wav_offset_ms": 3730.0,
+   "duration_ms": 200.0
+  },
+  {
+   "t_ms": 15849,
+   "conn": 6,
+   "turn": 3,
+   "bytes": 23040,
+   "wav_offset_ms": 3930.0,
+   "duration_ms": 480.0
+  },
+  {
+   "t_ms": 15927,
+   "conn": 6,
+   "turn": 3,
+   "bytes": 19200,
+   "wav_offset_ms": 4410.0,
+   "duration_ms": 400.0
+  },
+  {
+   "t_ms": 16093,
+   "conn": 6,
+   "turn": 3,
+   "bytes": 15360,
+   "wav_offset_ms": 4810.0,
+   "duration_ms": 320.0
+  },
+  {
+   "t_ms": 16097,
+   "conn": 6,
+   "turn": 3,
+   "bytes": 15360,
+   "wav_offset_ms": 5130.0,
+   "duration_ms": 320.0
+  },
+  {
+   "t_ms": 16188,
+   "conn": 6,
+   "turn": 3,
+   "bytes": 19200,
+   "wav_offset_ms": 5450.0,
+   "duration_ms": 400.0
+  },
+  {
+   "t_ms": 16299,
+   "conn": 6,
+   "turn": 3,
+   "bytes": 24960,
+   "wav_offset_ms": 5850.0,
+   "duration_ms": 520.0
+  },
+  {
+   "t_ms": 16384,
+   "conn": 6,
+   "turn": 3,
+   "bytes": 15360,
+   "wav_offset_ms": 6370.0,
+   "duration_ms": 320.0
+  },
+  {
+   "t_ms": 16438,
+   "conn": 6,
+   "turn": 3,
+   "bytes": 15360,
+   "wav_offset_ms": 6690.0,
+   "duration_ms": 320.0
+  }
+ ],
+ "user_clips": [
+  {
+   "label": "book_request",
+   "conn": 1,
+   "sent_start_ms": 379,
+   "sent_end_ms": 2685,
+   "source": "assets/audio/af_heart/book.wav",
+   "sample_rate": 16000,
+   "duration_ms": 2379.1
+  },
+  {
+   "label": "ask",
+   "conn": 6,
+   "sent_start_ms": 13388,
+   "sent_end_ms": 14190,
+   "source": "assets/audio/af_heart/did_you_book.wav",
+   "sample_rate": 16000,
+   "duration_ms": 893.4
+  }
+ ],
+ "events": {
+  "interrupted_ms": [
+   13543
+  ],
+  "generation_complete_ms": [
+   3816,
+   12143,
+   16467
+  ],
+  "turn_complete_ms": [
+   3816,
+   13547,
+   19430
+  ]
+ }
+}
