@@ -52,6 +52,10 @@ call id. Then "Did you book it?" is asked. BR1: B1 timing. BR2: B2 timing (defau
 --disconnect-after 0.2, inside the model's audio burst). --no-status-note is the
 ablation (summary only). The control BR0 is B1 with --bh-period 1 --bh-max 60.
 
+--save-audio (clip material, as in ../gemini-live-stop-test) writes the model's output
+audio of each run to <results-dir>/audio_out/<name>_run<N>_model.wav, plus a JSON
+sidecar with each chunk's arrival time and connection and each user clip's send times.
+
 A raw tap replaces google.genai.live.ws_connect so every frame is seen, including the
 first server message, which the SDK consumes inside connect(). With
 --inject-transparent the tap adds "transparent": true to setup.sessionResumption on
@@ -424,11 +428,15 @@ class Mic:
                                     audio_s=round(sum(map(len, cur.chunks)) / (AUDIO_RATE * 2), 3),
                                     chunks=len(cur.chunks), client_msg_index=conn.client_index)
                         cur.started.set_result(t)
+                        st.clip_sends.append({"label": cur.label, "conn": conn.n,
+                                              "sent_start_ms": t, "sent_end_ms": None})
                     idx += 1
                     if idx == len(cur.chunks):
                         t = st.emit("user_audio_end", conn=conn.n, label=cur.label,
                                     client_msg_index=conn.client_index)
                         st.user_audio_ends.append(t)
+                        if st.clip_sends and st.clip_sends[-1]["label"] == cur.label:
+                            st.clip_sends[-1]["sent_end_ms"] = t
                         cur.ended.set_result(t)
                         self.current = None
                 next_t += len(data) / (AUDIO_RATE * 2)
@@ -565,6 +573,10 @@ class RunState:
     first_audio_by_conn: dict = field(default_factory=dict)
     last_audio_chunk_ms: int | None = None
     loss_audio: dict | None = None      # what had been heard when the flow was blackholed
+    # --save-audio (clip material only; changes nothing in the run)
+    audio_out: list[dict] = field(default_factory=list)    # per model chunk: t_ms, conn, rate
+    audio_data: list[bytes] = field(default_factory=list)  # model chunk bytes
+    clip_sends: list[dict] = field(default_factory=list)   # user clips: label, conn, send times
 
     def __post_init__(self) -> None:
         self.service = TwoPhaseBookingService(self, self.args.latency)
@@ -706,8 +718,13 @@ class RunState:
         responded = {r["call_id"] for r in self.tool_responses}
         return [c["id"] for c in self.calls if c["id"] not in responded]
 
-    def audio_chunk(self, conn: Conn, nbytes: int, rate: int = OUT_AUDIO_RATE) -> None:
+    def audio_chunk(self, conn: Conn, nbytes: int, rate: int = OUT_AUDIO_RATE,
+                    data: bytes | None = None) -> None:
         t = self.clock.ms()
+        if data is not None and getattr(self.args, "save_audio", False):
+            self.audio_out.append({"t_ms": t, "conn": conn.n, "turn": self.turn_idx,
+                                   "rate": rate})
+            self.audio_data.append(data)
         # Playback model for the user-visible gap: chunks play back to back in arrival
         # order, starting on arrival when nothing is playing; `interrupted` flushes.
         self.play_end_ms = max(self.play_end_ms, t) + nbytes / (rate * 2) * 1000
@@ -1033,7 +1050,8 @@ def handle_server_content(st: RunState, conn: Conn, sc: types.LiveServerContent)
             if part.inline_data is not None and (part.inline_data.mime_type or "").startswith("audio"):
                 m = re.search(r"rate=(\d+)", part.inline_data.mime_type or "")
                 st.audio_chunk(conn, len(part.inline_data.data or b""),
-                               int(m.group(1)) if m else OUT_AUDIO_RATE)
+                               int(m.group(1)) if m else OUT_AUDIO_RATE,
+                               data=part.inline_data.data or b"")
             elif part.text:
                 if part.thought:
                     st.emit("model_thought", conn=conn.n, text=part.text[:400])
@@ -1951,7 +1969,8 @@ async def run_once(args: argparse.Namespace, run: int, out: JsonlWriter, client:
                 "n3_unfreeze_after_s": args.n3_unfreeze_after,
                 "reconnect_retries": args.reconnect_retries},
             clips_s={k: round(pcm_seconds(v), 3) for k, v in args.clips.items()},
-            chunk_ms=int(CHUNK_S * 1000), mime_type=AUDIO_MIME)
+            chunk_ms=int(CHUNK_S * 1000), mime_type=AUDIO_MIME,
+            **({"save_audio": True} if getattr(args, "save_audio", False) else {}))
     TAP.inject_transparent = args.inject_transparent
     script_task: asyncio.Task | None = None
     try:
@@ -2085,6 +2104,70 @@ def join_turns(chunks: list[tuple[int, int, int, str]]) -> str:
 
 def md(text: Any) -> str:
     return re.sub(r"\s+", " ", str(text)).replace("|", "\\|").strip()
+
+
+CLIP_SOURCES = {"book_request": "book.wav", "followup": "bring.wav", "hello": "hello.wav"}
+
+
+def save_run_audio(st: RunState, out_dir: Path) -> dict:
+    """--save-audio: <name>_run<N>_model.wav (every model audio chunk of the run, all
+    connections, concatenated in arrival order) and <name>_run<N>_audio.json (each
+    chunk's arrival time, connection and offset in the WAV; each user clip's send times
+    and source file in assets/audio/). Same layout as ../gemini-live-stop-test."""
+    a = st.args
+    out_dir.mkdir(parents=True, exist_ok=True)
+    stem = f"{a.name}_run{st.run}"
+    rates = {c["rate"] for c in st.audio_out}
+    if len(rates) > 1:
+        raise ValueError(f"model audio at several rates: {sorted(rates)}")
+    rate = rates.pop() if rates else OUT_AUDIO_RATE
+    chunks, offset = [], 0
+    for meta, data in zip(st.audio_out, st.audio_data):
+        chunks.append({"t_ms": meta["t_ms"], "conn": meta["conn"], "turn": meta["turn"],
+                       "bytes": len(data), "wav_offset_ms": round(offset / 2 / rate * 1000, 1),
+                       "duration_ms": round(len(data) / 2 / rate * 1000, 1)})
+        offset += len(data)
+    pcm = b"".join(st.audio_data)
+    if len(pcm) % 2:
+        pcm = pcm[:-1]
+    wav_path = out_dir / f"{stem}_model.wav"
+    if pcm:
+        with wave.open(str(wav_path), "wb") as w:
+            w.setnchannels(1)
+            w.setsampwidth(2)
+            w.setframerate(rate)
+            w.writeframes(pcm)
+    user = []
+    for c in st.clip_sends:
+        src = CLIP_SOURCES.get(c["label"], "did_you_book.wav")
+        user.append(c | {"source": f"assets/audio/{src}", "sample_rate": AUDIO_RATE,
+                         "duration_ms": round(pcm_seconds(load_pcm(AUDIO_DIR / src)) * 1000, 1)})
+    sidecar = {
+        "scenario": a.name, "run": st.run, "wall": st.wall, "model": a.model,
+        "time_base": "ms since session start, the t_ms of the JSONL. t_ms of a model chunk "
+                     "is when the harness received it; sent_start_ms / sent_end_ms of a "
+                     "user clip are when its first / last 100 ms chunk was sent.",
+        "model_audio": {
+            "file": wav_path.name if pcm else None, "sample_rate": rate, "channels": 1,
+            "sample_width_bits": 16, "duration_s": round(len(pcm) / 2 / rate, 3),
+            "chunks": len(chunks),
+            "note": "Chunks are concatenated in arrival order with no gaps. The server "
+                    "sends audio faster than real time, so wav_offset_ms is not the "
+                    "arrival time: place each chunk at its t_ms or later. A client that "
+                    "plays audio drops what is still queued when `interrupted` arrives; "
+                    "this file keeps everything received.",
+        },
+        "chunks": chunks,
+        "user_clips": user,
+        "events": {"interrupted_ms": st.interrupted_ms,
+                   "generation_complete_ms": st.gen_complete_ms,
+                   "turn_complete_ms": st.turn_complete_ms},
+    }
+    side_path = out_dir / f"{stem}_audio.json"
+    side_path.write_text(redact(json.dumps(sidecar, indent=1, ensure_ascii=False, default=str)),
+                         encoding="utf-8")
+    return {"model_wav": wav_path.name if pcm else None, "sidecar": side_path.name,
+            "model_audio_s": sidecar["model_audio"]["duration_s"], "sample_rate": rate}
 
 
 def summarize(st: RunState) -> dict:
@@ -2636,6 +2719,10 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     p.add_argument("--inject-transparent", action="store_true",
                    help="add \"transparent\": true to setup.sessionResumption on the wire "
                         "(the SDK refuses it in Gemini Developer API mode)")
+    p.add_argument("--save-audio", action="store_true",
+                   help="write each run's model output audio to <results-dir>/audio_out/"
+                        "<name>_run<N>_model.wav plus a JSON sidecar with chunk arrival "
+                        "times and user clip send times (clip material; same run otherwise)")
     p.add_argument("--results-dir", default=str(HERE / "results"))
     p.add_argument("-v", "--verbose", action="store_true")
     args = p.parse_args(argv)
@@ -2722,6 +2809,12 @@ async def amain(args: argparse.Namespace) -> int:
             try:
                 st = await run_once(args, run, out, client)
                 row = summarize(st)
+                if args.save_audio:
+                    try:
+                        row["saved_audio"] = save_run_audio(st, results / "audio_out")
+                    except Exception as exc:
+                        row["saved_audio"] = {"error": err_text(exc)}
+                        out.write(run, -1, "save_audio_failed", detail=err_text(exc))
                 quota = next((e for e in st.errors if QUOTA_RE.search(e)), None)
             except Exception as exc:
                 quota = err_text(exc) if QUOTA_RE.search(err_text(exc)) else None

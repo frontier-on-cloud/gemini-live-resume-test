@@ -1,0 +1,237 @@
+{
+ "scenario": "BR1_audio",
+ "run": 1,
+ "wall": "2026-10-03T12:28:57",
+ "model": "gemini-3.8-live",
+ "time_base": "ms since session start, the t_ms of the JSONL. t_ms of a model chunk is when the harness received it; sent_start_ms / sent_end_ms of a user clip are when its first / last 100 ms chunk was sent.",
+ "model_audio": {
+  "file": "BR1_audio_run1_model.wav",
+  "sample_rate": 24000,
+  "channels": 1,
+  "sample_width_bits": 16,
+  "duration_s": 7.17,
+  "chunks": 23,
+  "note": "Chunks are concatenated in arrival order with no gaps. The server sends audio faster than real time, so wav_offset_ms is not the arrival time: place each chunk at its t_ms or later. A client that plays audio drops what is still queued when `interrupted` arrives; this file keeps everything received."
+ },
+ "chunks": [
+  {
+   "t_ms": 11566,
+   "conn": 6,
+   "turn": 1,
+   "bytes": 17760,
+   "wav_offset_ms": 0.0,
+   "duration_ms": 370.0
+  },
+  {
+   "t_ms": 11636,
+   "conn": 6,
+   "turn": 1,
+   "bytes": 17280,
+   "wav_offset_ms": 370.0,
+   "duration_ms": 360.0
+  },
+  {
+   "t_ms": 11662,
+   "conn": 6,
+   "turn": 1,
+   "bytes": 1920,
+   "wav_offset_ms": 730.0,
+   "duration_ms": 40.0
+  },
+  {
+   "t_ms": 11785,
+   "conn": 6,
+   "turn": 1,
+   "bytes": 26880,
+   "wav_offset_ms": 770.0,
+   "duration_ms": 560.0
+  },
+  {
+   "t_ms": 11866,
+   "conn": 6,
+   "turn": 1,
+   "bytes": 15360,
+   "wav_offset_ms": 1330.0,
+   "duration_ms": 320.0
+  },
+  {
+   "t_ms": 11947,
+   "conn": 6,
+   "turn": 1,
+   "bytes": 15360,
+   "wav_offset_ms": 1650.0,
+   "duration_ms": 320.0
+  },
+  {
+   "t_ms": 12009,
+   "conn": 6,
+   "turn": 1,
+   "bytes": 15360,
+   "wav_offset_ms": 1970.0,
+   "duration_ms": 320.0
+  },
+  {
+   "t_ms": 12089,
+   "conn": 6,
+   "turn": 1,
+   "bytes": 17280,
+   "wav_offset_ms": 2290.0,
+   "duration_ms": 360.0
+  },
+  {
+   "t_ms": 12202,
+   "conn": 6,
+   "turn": 1,
+   "bytes": 21120,
+   "wav_offset_ms": 2650.0,
+   "duration_ms": 440.0
+  },
+  {
+   "t_ms": 12316,
+   "conn": 6,
+   "turn": 1,
+   "bytes": 21120,
+   "wav_offset_ms": 3090.0,
+   "duration_ms": 440.0
+  },
+  {
+   "t_ms": 12373,
+   "conn": 6,
+   "turn": 1,
+   "bytes": 15360,
+   "wav_offset_ms": 3530.0,
+   "duration_ms": 320.0
+  },
+  {
+   "t_ms": 12400,
+   "conn": 6,
+   "turn": 1,
+   "bytes": 1920,
+   "wav_offset_ms": 3850.0,
+   "duration_ms": 40.0
+  },
+  {
+   "t_ms": 15229,
+   "conn": 6,
+   "turn": 3,
+   "bytes": 2,
+   "wav_offset_ms": 3890.0,
+   "duration_ms": 0.0
+  },
+  {
+   "t_ms": 15281,
+   "conn": 6,
+   "turn": 3,
+   "bytes": 11520,
+   "wav_offset_ms": 3890.0,
+   "duration_ms": 240.0
+  },
+  {
+   "t_ms": 15338,
+   "conn": 6,
+   "turn": 3,
+   "bytes": 11520,
+   "wav_offset_ms": 4130.0,
+   "duration_ms": 240.0
+  },
+  {
+   "t_ms": 15424,
+   "conn": 6,
+   "turn": 3,
+   "bytes": 13440,
+   "wav_offset_ms": 4370.0,
+   "duration_ms": 280.0
+  },
+  {
+   "t_ms": 15516,
+   "conn": 6,
+   "turn": 3,
+   "bytes": 19200,
+   "wav_offset_ms": 4650.0,
+   "duration_ms": 400.0
+  },
+  {
+   "t_ms": 15610,
+   "conn": 6,
+   "turn": 3,
+   "bytes": 15360,
+   "wav_offset_ms": 5050.0,
+   "duration_ms": 320.0
+  },
+  {
+   "t_ms": 15759,
+   "conn": 6,
+   "turn": 3,
+   "bytes": 30720,
+   "wav_offset_ms": 5370.0,
+   "duration_ms": 640.0
+  },
+  {
+   "t_ms": 15823,
+   "conn": 6,
+   "turn": 3,
+   "bytes": 15360,
+   "wav_offset_ms": 6010.0,
+   "duration_ms": 320.0
+  },
+  {
+   "t_ms": 15914,
+   "conn": 6,
+   "turn": 3,
+   "bytes": 17280,
+   "wav_offset_ms": 6330.0,
+   "duration_ms": 360.0
+  },
+  {
+   "t_ms": 15995,
+   "conn": 6,
+   "turn": 3,
+   "bytes": 21120,
+   "wav_offset_ms": 6690.0,
+   "duration_ms": 440.0
+  },
+  {
+   "t_ms": 16021,
+   "conn": 6,
+   "turn": 3,
+   "bytes": 1920,
+   "wav_offset_ms": 7130.0,
+   "duration_ms": 40.0
+  }
+ ],
+ "user_clips": [
+  {
+   "label": "book_request",
+   "conn": 1,
+   "sent_start_ms": 347,
+   "sent_end_ms": 2949,
+   "source": "assets/audio/book.wav",
+   "sample_rate": 16000,
+   "duration_ms": 2686.1
+  },
+  {
+   "label": "ask",
+   "conn": 6,
+   "sent_start_ms": 13519,
+   "sent_end_ms": 14221,
+   "source": "assets/audio/did_you_book.wav",
+   "sample_rate": 16000,
+   "duration_ms": 746.2
+  }
+ ],
+ "events": {
+  "interrupted_ms": [
+   13658
+  ],
+  "generation_complete_ms": [
+   4091,
+   12429,
+   16056
+  ],
+  "turn_complete_ms": [
+   4092,
+   13660,
+   18565
+  ]
+ }
+}

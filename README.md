@@ -242,6 +242,23 @@ results, including the offline container check of the blackhole.
   and says so under the table.
 - `results/sessions.log`: one line per harness session, the budget ledger.
 - `results/repro/`: stdout of the minimal reproduction.
+- `results/figures/lockout.png`: the lockout (B1, B2) and the recovery (BR1) in one figure,
+  drawn from the JSONL by `make_figure.py`.
+- `results/clip/`: `lockout-recovery.mp4` (and a GIF), B1 run 1 then one BR1 session, drawn
+  by `make_clip.py`. That BR1 session was recorded on 2026-10-03 for the clip only, with
+  `--save-audio` (the model's output audio and its chunk times are in `results/clip/audio_out/`).
+  It is not one of the 43 sessions above, and its JSONL, ledger and summary stay in
+  `results/clip/`. It behaved like the four BR1 runs: 4 refusals, a new session 3.91 s after
+  detection, first model audio 6.46 s after the loss, one booking, a correct answer.
+
+```sh
+uv run --with matplotlib python make_figure.py
+uv run --with imageio-ffmpeg --with pillow --with numpy python make_clip.py
+# the clip session (round 3 container; results/clip mounted as the results dir):
+docker run --rm --cap-add NET_ADMIN -e TZ=Europe/Paris -v $PWD/.env:/app/.env:ro \
+  -v $PWD/results/clip:/app/results resume-test python resume_test.py --scenario BR1 -n 1 \
+  --save-audio --name BR1_audio --budget 1
+```
 
 ## Limits
 
@@ -290,6 +307,7 @@ they do say.
 - `blackhole.py`: the iptables blackhole and packet watch of round 3.
 - `repro_resume_lockout.py`: the minimal reproduction.
 - `make_summary.py`: rebuilds `results/summary.md` from the JSONL.
+- `make_figure.py`, `make_clip.py`: the figure and the demo clip, from the JSONL.
 - `test_freeze_proxy.py`, `test_blackhole.py`, `test_recovery.py`: offline checks.
 - `introspect.py`: prints the SDK surface used (no network, no key).
 - `Dockerfile`: the round 3 and stage 2 client container.
