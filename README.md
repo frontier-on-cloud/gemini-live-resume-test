@@ -257,6 +257,10 @@ results, including the offline container check of the blackhole.
     model audio 6.57 s after the loss, one booking, no re-issued call, a correct answer. The
     clip shows the first session in real time to 9.3 s, the rest of it compressed ×4 (marked
     on screen), then the second in real time.
+  - `lockout-recovery-v2-coldopen.mp4` (61.2 s, added 2026-10-04), cut by `make_coldopen.py`
+    from the v2 clip for feeds: two labelled excerpts first (the end still without recovery,
+    then "Did you book it?" and the answer with recovery), then the full v2 clip. No frame or
+    sample is new.
   - `lockout-recovery.mp4` (and a GIF), the first clip: B1 run 1 then one BR1 session
     (`BR1_audio`), macOS `say` voice, drawn by `make_clip.py` as of commit `a2bc678`. That
     BR1 session behaved like the four BR1 runs: 4 refusals, a new session 3.91 s after
@@ -265,6 +269,7 @@ results, including the offline container check of the blackhole.
 ```sh
 uv run --with matplotlib python make_figure.py
 uv run --with imageio-ffmpeg --with pillow --with numpy python make_clip.py
+uv run --with imageio-ffmpeg python make_coldopen.py
 # the clip sessions (round 3 container; results/clip mounted as the results dir):
 R="docker run --rm --cap-add NET_ADMIN -e TZ=Europe/Paris -v $PWD/.env:/app/.env:ro \
   -v $PWD/results/clip:/app/results resume-test python resume_test.py -n 1 --save-audio"
@@ -320,6 +325,7 @@ they do say.
 - `repro_resume_lockout.py`: the minimal reproduction.
 - `make_summary.py`: rebuilds `results/summary.md` from the JSONL.
 - `make_figure.py`, `make_clip.py`: the figure and the demo clip, from the JSONL.
+- `make_coldopen.py`: the cold-open cut of the v2 clip, from the rendered clip.
 - `test_freeze_proxy.py`, `test_blackhole.py`, `test_recovery.py`: offline checks.
 - `introspect.py`: prints the SDK surface used (no network, no key).
 - `Dockerfile`: the round 3 and stage 2 client container.
